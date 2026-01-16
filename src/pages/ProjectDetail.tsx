@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   Download,
-  Save,
   Loader2,
   Code,
   Edit2,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Highlight, themes } from "prism-react-renderer";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 
 interface Project {
   id: string;
@@ -275,11 +275,10 @@ export default function ProjectDetail() {
         {/* Code Editor / Viewer */}
         <div className="flex-1 border border-border rounded-lg overflow-hidden bg-[#1e1e1e]">
           {editing ? (
-            <textarea
+            <CodeEditor
               value={editedCode}
-              onChange={(e) => setEditedCode(e.target.value)}
-              className="w-full h-full min-h-[500px] p-4 bg-[#1e1e1e] text-gray-100 font-mono text-sm resize-none focus:outline-none"
-              spellCheck={false}
+              onChange={setEditedCode}
+              language={project.language}
             />
           ) : (
             <div className="overflow-auto h-full min-h-[500px]">
