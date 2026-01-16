@@ -1,5 +1,5 @@
-import { ChatInterface } from "@/components/chat/ChatInterface";
+import { ChatWithPreview } from "@/components/chat/ChatWithPreview";
 
 export default function Chat() {
-  return <ChatInterface />;
+  return <ChatWithPreview />;
 }

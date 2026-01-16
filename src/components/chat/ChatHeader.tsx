@@ -2,17 +2,19 @@ import { ArrowLeft, Globe, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { ReactNode } from "react";
 
 type Language = "en" | "bn";
 
-interface ChatHeaderProps {
+export interface ChatHeaderProps {
   language: Language;
   onLanguageChange: (lang: Language) => void;
   onClear: () => void;
   hasMessages: boolean;
+  extraActions?: ReactNode;
 }
 
-export function ChatHeader({ language, onLanguageChange, onClear, hasMessages }: ChatHeaderProps) {
+export function ChatHeader({ language, onLanguageChange, onClear, hasMessages, extraActions }: ChatHeaderProps) {
   const toggleLanguage = () => {
     onLanguageChange(language === "en" ? "bn" : "en");
   };
@@ -42,6 +44,8 @@ export function ChatHeader({ language, onLanguageChange, onClear, hasMessages }:
         </div>
 
         <div className="flex items-center gap-2">
+          {extraActions}
+          
           <Button
             variant="outline"
             size="sm"
