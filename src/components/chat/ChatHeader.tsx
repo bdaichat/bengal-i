@@ -1,6 +1,7 @@
 import { ArrowLeft, Globe, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 type Language = "en" | "bn";
 
@@ -61,6 +62,8 @@ export function ChatHeader({ language, onLanguageChange, onClear, hasMessages }:
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
+
+          <UserMenu language={language} />
         </div>
       </div>
     </header>
