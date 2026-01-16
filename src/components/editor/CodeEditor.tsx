@@ -2,7 +2,7 @@ import { useRef, useCallback, useState, useEffect, useMemo } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, ChevronUp, ChevronDown, Replace, ReplaceAll } from "lucide-react";
+import { X, ChevronUp, ChevronDown, Replace, ReplaceAll, Regex } from "lucide-react";
 
 interface CodeEditorProps {
   value: string;
@@ -26,29 +26,59 @@ export function CodeEditor({ value, onChange, language }: CodeEditorProps) {
   const [replaceQuery, setReplaceQuery] = useState("");
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [caseSensitive, setCaseSensitive] = useState(false);
+  const [useRegex, setUseRegex] = useState(false);
+  const [regexError, setRegexError] = useState<string | null>(null);
 
   // Find all matches
   const matches = useMemo((): Match[] => {
-    if (!searchQuery) return [];
+    if (!searchQuery) {
+      setRegexError(null);
+      return [];
+    }
     
     const results: Match[] = [];
-    const searchValue = caseSensitive ? value : value.toLowerCase();
-    const query = caseSensitive ? searchQuery : searchQuery.toLowerCase();
     
-    let index = 0;
-    while ((index = searchValue.indexOf(query, index)) !== -1) {
-      // Calculate line index
-      const lineIndex = value.substring(0, index).split("\n").length - 1;
-      results.push({
-        start: index,
-        end: index + searchQuery.length,
-        lineIndex,
-      });
-      index += 1;
+    if (useRegex) {
+      try {
+        const flags = caseSensitive ? "g" : "gi";
+        const regex = new RegExp(searchQuery, flags);
+        setRegexError(null);
+        
+        let match;
+        while ((match = regex.exec(value)) !== null) {
+          if (match[0].length === 0) {
+            regex.lastIndex++; // Prevent infinite loop on zero-length matches
+            continue;
+          }
+          const lineIndex = value.substring(0, match.index).split("\n").length - 1;
+          results.push({
+            start: match.index,
+            end: match.index + match[0].length,
+            lineIndex,
+          });
+        }
+      } catch (e) {
+        setRegexError(e instanceof Error ? e.message : "Invalid regex");
+        return [];
+      }
+    } else {
+      const searchValue = caseSensitive ? value : value.toLowerCase();
+      const query = caseSensitive ? searchQuery : searchQuery.toLowerCase();
+      
+      let index = 0;
+      while ((index = searchValue.indexOf(query, index)) !== -1) {
+        const lineIndex = value.substring(0, index).split("\n").length - 1;
+        results.push({
+          start: index,
+          end: index + searchQuery.length,
+          lineIndex,
+        });
+        index += 1;
+      }
     }
     
     return results;
-  }, [value, searchQuery, caseSensitive]);
+  }, [value, searchQuery, caseSensitive, useRegex]);
 
   // Reset current match index when matches change
   useEffect(() => {
@@ -139,14 +169,24 @@ export function CodeEditor({ value, onChange, language }: CodeEditorProps) {
     if (matches.length === 0 || !searchQuery) return;
     
     let newValue = value;
-    if (caseSensitive) {
-      newValue = newValue.split(searchQuery).join(replaceQuery);
+    if (useRegex) {
+      try {
+        const flags = caseSensitive ? "g" : "gi";
+        const regex = new RegExp(searchQuery, flags);
+        newValue = newValue.replace(regex, replaceQuery);
+      } catch {
+        return; // Invalid regex, do nothing
+      }
     } else {
-      const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-      newValue = newValue.replace(regex, replaceQuery);
+      if (caseSensitive) {
+        newValue = newValue.split(searchQuery).join(replaceQuery);
+      } else {
+        const regex = new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        newValue = newValue.replace(regex, replaceQuery);
+      }
     }
     onChange(newValue);
-  }, [matches.length, searchQuery, replaceQuery, value, caseSensitive, onChange]);
+  }, [matches.length, searchQuery, replaceQuery, value, caseSensitive, useRegex, onChange]);
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -313,7 +353,7 @@ export function CodeEditor({ value, onChange, language }: CodeEditorProps) {
               <ReplaceAll className="h-4 w-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <label className="flex items-center gap-1 text-xs text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
@@ -323,7 +363,22 @@ export function CodeEditor({ value, onChange, language }: CodeEditorProps) {
               />
               Case sensitive
             </label>
+            <Button
+              variant={useRegex ? "secondary" : "ghost"}
+              size="sm"
+              className="h-6 px-2 text-xs gap-1"
+              onClick={() => setUseRegex(!useRegex)}
+              title="Use Regular Expression"
+            >
+              <Regex className="h-3 w-3" />
+              Regex
+            </Button>
           </div>
+          {regexError && (
+            <div className="text-xs text-destructive bg-destructive/10 px-2 py-1 rounded">
+              {regexError}
+            </div>
+          )}
         </div>
       )}
 
