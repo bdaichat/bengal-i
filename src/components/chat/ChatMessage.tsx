@@ -1,23 +1,15 @@
 import { Message } from "@/hooks/useChat";
-import { Bot, User, Copy, Check } from "lucide-react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { CodeBlock } from "./CodeBlock";
 
 interface ChatMessageProps {
   message: Message;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
-
-  const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(message.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className={cn("flex items-start gap-3", isUser && "flex-row-reverse")}>
@@ -42,21 +34,33 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown
               components={{
-                pre: ({ children }) => (
-                  <div className="relative group">
-                    <pre className="bg-background/80 rounded-lg p-4 overflow-x-auto text-sm border border-border/50">
+                pre: ({ children, node }) => {
+                  // Extract code content and language from the code element
+                  const codeElement = node?.children?.[0];
+                  let code = "";
+                  let language = "text";
+                  
+                  if (codeElement && codeElement.type === "element" && codeElement.tagName === "code") {
+                    const className = codeElement.properties?.className as string[] | undefined;
+                    if (className && Array.isArray(className)) {
+                      const langClass = className.find((c) => c.startsWith("language-"));
+                      if (langClass) {
+                        language = langClass.replace("language-", "");
+                      }
+                    }
+                    // Extract text content
+                    const textNode = codeElement.children?.[0];
+                    if (textNode && textNode.type === "text") {
+                      code = textNode.value;
+                    }
+                  }
+                  
+                  return (
+                    <CodeBlock code={code} language={language}>
                       {children}
-                    </pre>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={copyToClipboard}
-                    >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                ),
+                    </CodeBlock>
+                  );
+                },
                 code: ({ className, children, ...props }) => {
                   const isInline = !className;
                   if (isInline) {
