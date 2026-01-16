@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LivePreview } from "./LivePreview";
+import { generatePreviewHTML } from "@/utils/previewTemplate";
 import { 
   Monitor, 
   Tablet, 
@@ -8,6 +9,7 @@ import {
   RefreshCw, 
   Code2, 
   Maximize2,
+  ExternalLink,
   X 
 } from "lucide-react";
 import {
@@ -34,6 +36,14 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
+  };
+
+  const handleOpenInNewTab = () => {
+    if (!code) return;
+    const html = generatePreviewHTML(code);
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   };
 
   if (isFullscreen) {
@@ -142,6 +152,23 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Refresh</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleOpenInNewTab}
+                  disabled={!code}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Open in New Tab</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
