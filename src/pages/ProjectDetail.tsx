@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -158,14 +158,37 @@ export default function ProjectDetail() {
     });
   };
 
-  const cancelEditing = () => {
+  const cancelEditing = useCallback(() => {
     if (project) {
       setEditedCode(project.code || "");
       setEditedTitle(project.title);
       setEditedDescription(project.description || "");
     }
     setEditing(false);
-  };
+  }, [project]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!editing) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (!saving) {
+          handleSave();
+        }
+      }
+      // Escape to cancel
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelEditing();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editing, saving, editedCode, editedTitle, editedDescription, cancelEditing]);
 
   if (authLoading || loading) {
     return (
