@@ -117,7 +117,8 @@ export default function Projects() {
             {projects.map((project) => (
               <Card
                 key={project.id}
-                className="group hover:border-primary/50 transition-colors"
+                className="group hover:border-primary/50 transition-colors cursor-pointer"
+                onClick={() => navigate(`/projects/${project.id}`)}
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
@@ -131,7 +132,10 @@ export default function Projects() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => deleteProject(project.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
