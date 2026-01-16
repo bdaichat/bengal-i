@@ -9,10 +9,67 @@ interface LivePreviewProps {
 }
 
 const deviceSizes = {
-  mobile: { width: 375, height: 667 },
+  mobile: { width: 375, height: 812 },
   tablet: { width: 768, height: 1024 },
   desktop: { width: "100%", height: "100%" },
 };
+
+function MobileFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      {/* Phone outer frame */}
+      <div className="relative bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-[3rem] p-3 shadow-2xl">
+        {/* Side buttons - left */}
+        <div className="absolute left-[-2px] top-28 w-[3px] h-8 bg-zinc-700 rounded-l-sm" />
+        <div className="absolute left-[-2px] top-40 w-[3px] h-12 bg-zinc-700 rounded-l-sm" />
+        <div className="absolute left-[-2px] top-56 w-[3px] h-12 bg-zinc-700 rounded-l-sm" />
+        
+        {/* Side button - right (power) */}
+        <div className="absolute right-[-2px] top-32 w-[3px] h-16 bg-zinc-700 rounded-r-sm" />
+        
+        {/* Inner bezel */}
+        <div className="bg-black rounded-[2.5rem] p-1">
+          {/* Dynamic Island / Notch */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+            <div className="w-28 h-7 bg-black rounded-full flex items-center justify-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-zinc-800 ring-1 ring-zinc-700" />
+              <div className="w-3 h-3 rounded-full bg-zinc-800 ring-1 ring-zinc-700" />
+            </div>
+          </div>
+          
+          {/* Screen */}
+          <div className="relative bg-white rounded-[2rem] overflow-hidden" style={{ width: 375, height: 812 }}>
+            {children}
+          </div>
+        </div>
+        
+        {/* Home indicator */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 h-1 bg-zinc-600 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function TabletFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative">
+      {/* Tablet outer frame */}
+      <div className="relative bg-gradient-to-b from-zinc-800 to-zinc-900 rounded-[2rem] p-4 shadow-2xl">
+        {/* Camera */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 w-3 h-3 bg-zinc-700 rounded-full ring-2 ring-zinc-600" />
+        
+        {/* Side button - right (power) */}
+        <div className="absolute right-[-2px] top-20 w-[3px] h-10 bg-zinc-700 rounded-r-sm" />
+        <div className="absolute right-[-2px] top-36 w-[3px] h-6 bg-zinc-700 rounded-r-sm" />
+        
+        {/* Screen */}
+        <div className="relative bg-white rounded-lg overflow-hidden" style={{ width: 768, height: 1024 }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function LivePreview({ code, componentName = "App", deviceSize = "desktop" }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -38,11 +95,18 @@ export function LivePreview({ code, componentName = "App", deviceSize = "desktop
     setIsLoading(false);
   };
 
-  const size = deviceSizes[deviceSize];
-  const isFullWidth = deviceSize === "desktop";
+  const renderIframe = () => (
+    <iframe
+      ref={iframeRef}
+      className="w-full h-full border-0"
+      sandbox="allow-scripts allow-same-origin"
+      title="Live Preview"
+      onLoad={handleLoad}
+    />
+  );
 
   return (
-    <div className="relative h-full w-full bg-muted/30 flex items-center justify-center overflow-auto">
+    <div className="relative h-full w-full bg-muted/30 flex items-center justify-center overflow-auto p-4">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -57,36 +121,15 @@ export function LivePreview({ code, componentName = "App", deviceSize = "desktop
         </div>
       )}
 
-      <div
-        className={`relative bg-white shadow-xl transition-all duration-300 ${
-          isFullWidth ? "w-full h-full" : "rounded-lg overflow-hidden"
-        }`}
-        style={
-          isFullWidth
-            ? undefined
-            : {
-                width: size.width,
-                height: size.height,
-                maxHeight: "calc(100% - 32px)",
-              }
-        }
-      >
-        {!isFullWidth && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-            <div className="w-16 h-1 rounded-full bg-muted-foreground/30" />
-            <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-          </div>
-        )}
-        
-        <iframe
-          ref={iframeRef}
-          className="w-full h-full border-0"
-          sandbox="allow-scripts allow-same-origin"
-          title="Live Preview"
-          onLoad={handleLoad}
-        />
-      </div>
+      {deviceSize === "desktop" ? (
+        <div className="w-full h-full bg-white shadow-lg rounded-lg overflow-hidden">
+          {renderIframe()}
+        </div>
+      ) : deviceSize === "tablet" ? (
+        <TabletFrame>{renderIframe()}</TabletFrame>
+      ) : (
+        <MobileFrame>{renderIframe()}</MobileFrame>
+      )}
     </div>
   );
 }
