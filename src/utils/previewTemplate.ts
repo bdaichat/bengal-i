@@ -1,9 +1,9 @@
 /**
  * Generate HTML template for live preview iframe
  */
-export function generatePreviewHTML(code: string): string {
+export function generatePreviewHTML(code: string, darkMode: boolean = false): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="${darkMode ? 'dark' : ''}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,18 +30,20 @@ export function generatePreviewHTML(code: string): string {
     }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: white;
+      background: ${darkMode ? '#0a0a0a' : 'white'};
+      color: ${darkMode ? '#fafafa' : '#0a0a0a'};
       min-height: 100vh;
+      transition: background-color 0.2s, color 0.2s;
     }
     #root {
       min-height: 100vh;
     }
     .preview-error {
       padding: 20px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
+      background: ${darkMode ? '#450a0a' : '#fef2f2'};
+      border: 1px solid ${darkMode ? '#7f1d1d' : '#fecaca'};
       border-radius: 8px;
-      color: #dc2626;
+      color: ${darkMode ? '#fca5a5' : '#dc2626'};
       margin: 20px;
       font-family: monospace;
       white-space: pre-wrap;
@@ -51,23 +53,31 @@ export function generatePreviewHTML(code: string): string {
       align-items: center;
       justify-content: center;
       height: 100vh;
-      color: #6b7280;
+      color: ${darkMode ? '#a1a1aa' : '#6b7280'};
     }
   </style>
   
   <script>
-    // Configure Tailwind
+    // Configure Tailwind with dark mode support
     tailwind.config = {
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
+            background: ${darkMode ? "'#0a0a0a'" : "'#ffffff'"},
+            foreground: ${darkMode ? "'#fafafa'" : "'#0a0a0a'"},
+            card: ${darkMode ? "'#0a0a0a'" : "'#ffffff'"},
+            'card-foreground': ${darkMode ? "'#fafafa'" : "'#0a0a0a'"},
+            muted: ${darkMode ? "'#27272a'" : "'#f4f4f5'"},
+            'muted-foreground': ${darkMode ? "'#a1a1aa'" : "'#71717a'"},
+            border: ${darkMode ? "'#27272a'" : "'#e4e4e7'"},
             primary: {
               DEFAULT: '#2563eb',
               foreground: '#ffffff'
             },
             secondary: {
-              DEFAULT: '#f3f4f6',
-              foreground: '#1f2937'
+              DEFAULT: ${darkMode ? "'#27272a'" : "'#f4f4f5'"},
+              foreground: ${darkMode ? "'#fafafa'" : "'#18181b'"}
             }
           }
         }
