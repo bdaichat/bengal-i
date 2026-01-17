@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { LivePreview } from "./LivePreview";
 import { generatePreviewHTML } from "@/utils/previewTemplate";
 import { CodeEditor } from "@/components/editor/CodeEditor";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { 
   Monitor, 
   Tablet, 
@@ -12,7 +14,11 @@ import {
   Maximize2,
   ExternalLink,
   X,
-  Play
+  Play,
+  Save,
+  Cloud,
+  CloudOff,
+  Loader2
 } from "lucide-react";
 import {
   Tooltip,
@@ -20,22 +26,63 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface PreviewPanelProps {
   code: string | null;
   componentName?: string;
   onClose?: () => void;
+  projectId?: string | null;
+  language?: string;
 }
 
 type DeviceSize = "mobile" | "tablet" | "desktop";
 
-export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps) {
+export function PreviewPanel({ 
+  code, 
+  componentName, 
+  onClose,
+  projectId = null,
+  language = "tsx"
+}: PreviewPanelProps) {
+  const { isAuthenticated } = useAuthContext();
   const [deviceSize, setDeviceSize] = useState<DeviceSize>("desktop");
   const [showCode, setShowCode] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editableCode, setEditableCode] = useState(code || "");
   const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+  
+  // Save dialog state
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveTitle, setSaveTitle] = useState("");
+  const [saveDescription, setSaveDescription] = useState("");
+
+  // Auto-save hook
+  const {
+    isSaving,
+    lastSaved,
+    hasUnsavedChanges,
+    currentProjectId,
+    createNewProject,
+    manualSave,
+  } = useAutoSave({
+    code: editableCode,
+    projectId,
+    language,
+    debounceMs: 2000,
+    enabled: isAuthenticated,
+  });
 
   // Sync editableCode when new code comes in from AI
   useEffect(() => {
@@ -65,6 +112,42 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
+  };
+
+  const handleSaveClick = () => {
+    if (currentProjectId) {
+      // Already has a project, trigger manual save
+      manualSave();
+    } else {
+      // Open dialog to create new project
+      setShowSaveDialog(true);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!saveTitle.trim()) return;
+    
+    const newProjectId = await createNewProject(
+      editableCode,
+      saveTitle,
+      saveDescription
+    );
+    
+    if (newProjectId) {
+      setShowSaveDialog(false);
+      setSaveTitle("");
+      setSaveDescription("");
+    }
+  };
+
+  const formatLastSaved = () => {
+    if (!lastSaved) return null;
+    const now = new Date();
+    const diff = now.getTime() - lastSaved.getTime();
+    
+    if (diff < 60000) return "Just now";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    return lastSaved.toLocaleTimeString();
   };
 
   if (isFullscreen) {
@@ -144,6 +227,52 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
         </div>
         
         <div className="flex items-center gap-1">
+          {/* Auto-save status indicator */}
+          {isAuthenticated && editableCode && (
+            <div className="flex items-center gap-1 mr-2 text-xs text-muted-foreground">
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : currentProjectId ? (
+                <>
+                  <Cloud className="h-3 w-3 text-green-500" />
+                  {lastSaved && <span>{formatLastSaved()}</span>}
+                </>
+              ) : hasUnsavedChanges ? (
+                <>
+                  <CloudOff className="h-3 w-3 text-amber-500" />
+                  <span>Not saved</span>
+                </>
+              ) : null}
+            </div>
+          )}
+
+          {/* Save Button */}
+          {isAuthenticated && editableCode && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={hasUnsavedChanges && !currentProjectId ? "default" : "ghost"}
+                    size="icon"
+                    className={`h-8 w-8 ${hasUnsavedChanges && !currentProjectId ? "bg-primary hover:bg-primary/90" : ""}`}
+                    onClick={handleSaveClick}
+                    disabled={isSaving}
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {currentProjectId ? "Save Changes" : "Save as Project"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          <div className="w-px h-6 bg-border mx-1" />
+
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -266,6 +395,71 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
           />
         )}
       </div>
+
+      {/* Save Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Save as Project</DialogTitle>
+            <DialogDescription>
+              Save this code to your projects for easy access later.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="project-title">Title</Label>
+              <Input
+                id="project-title"
+                placeholder="My awesome component"
+                value={saveTitle}
+                onChange={(e) => setSaveTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && saveTitle.trim()) {
+                    handleCreateProject();
+                  }
+                }}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="project-description">Description (optional)</Label>
+              <Textarea
+                id="project-description"
+                placeholder="A brief description of this code..."
+                value={saveDescription}
+                onChange={(e) => setSaveDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                {language}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {editableCode.split("\n").length} lines
+              </span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateProject}
+              disabled={isSaving || !saveTitle.trim()}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Project"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
