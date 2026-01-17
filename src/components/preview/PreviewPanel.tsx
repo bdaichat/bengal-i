@@ -18,7 +18,9 @@ import {
   Save,
   Cloud,
   CloudOff,
-  Loader2
+  Loader2,
+  Sun,
+  Moon
 } from "lucide-react";
 import {
   Tooltip,
@@ -47,6 +49,7 @@ interface PreviewPanelProps {
 }
 
 type DeviceSize = "mobile" | "tablet" | "desktop";
+type ThemeMode = "light" | "dark";
 
 export function PreviewPanel({ 
   code, 
@@ -57,6 +60,7 @@ export function PreviewPanel({
 }: PreviewPanelProps) {
   const { isAuthenticated } = useAuthContext();
   const [deviceSize, setDeviceSize] = useState<DeviceSize>("desktop");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("light");
   const [showCode, setShowCode] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -108,10 +112,14 @@ export function PreviewPanel({
 
   const handleOpenInNewTab = () => {
     if (!editableCode) return;
-    const html = generatePreviewHTML(editableCode);
+    const html = generatePreviewHTML(editableCode, themeMode === "dark");
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
+  };
+
+  const toggleTheme = () => {
+    setThemeMode(prev => prev === "light" ? "dark" : "light");
   };
 
   const handleSaveClick = () => {
@@ -167,6 +175,7 @@ export function PreviewPanel({
           code={editableCode} 
           componentName={componentName}
           deviceSize="desktop"
+          darkMode={themeMode === "dark"}
         />
       </div>
     );
@@ -223,7 +232,32 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Mobile</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
+            </TooltipProvider>
+
+            <div className="w-px h-6 bg-border mx-1" />
+
+            {/* Theme Toggle */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={toggleTheme}
+                  >
+                    {themeMode === "light" ? (
+                      <Moon className="h-4 w-4" />
+                    ) : (
+                      <Sun className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {themeMode === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
         </div>
         
         <div className="flex items-center gap-1">
@@ -392,6 +426,7 @@ export function PreviewPanel({
             code={editableCode} 
             componentName={componentName}
             deviceSize={deviceSize}
+            darkMode={themeMode === "dark"}
           />
         )}
       </div>

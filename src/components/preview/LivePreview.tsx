@@ -6,6 +6,7 @@ interface LivePreviewProps {
   code: string | null;
   componentName?: string;
   deviceSize?: "mobile" | "tablet" | "desktop";
+  darkMode?: boolean;
 }
 
 const deviceSizes = {
@@ -71,7 +72,7 @@ function TabletFrame({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function LivePreview({ code, componentName = "App", deviceSize = "desktop" }: LivePreviewProps) {
+export function LivePreview({ code, componentName = "App", deviceSize = "desktop", darkMode = false }: LivePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,13 +84,13 @@ export function LivePreview({ code, componentName = "App", deviceSize = "desktop
     setError(null);
 
     try {
-      const html = code ? generatePreviewHTML(code) : generatePlaceholderHTML();
+      const html = code ? generatePreviewHTML(code, darkMode) : generatePlaceholderHTML();
       iframeRef.current.srcdoc = html;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to render preview");
       setIsLoading(false);
     }
-  }, [code, componentName]);
+  }, [code, componentName, darkMode]);
 
   const handleLoad = () => {
     setIsLoading(false);
