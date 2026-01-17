@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { LivePreview } from "./LivePreview";
 import { generatePreviewHTML } from "@/utils/previewTemplate";
+import { CodeEditor } from "@/components/editor/CodeEditor";
 import { 
   Monitor, 
   Tablet, 
@@ -10,7 +11,8 @@ import {
   Code2, 
   Maximize2,
   ExternalLink,
-  X 
+  X,
+  Play
 } from "lucide-react";
 import {
   Tooltip,
@@ -18,7 +20,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PreviewPanelProps {
   code: string | null;
@@ -33,14 +34,34 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
   const [showCode, setShowCode] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [editableCode, setEditableCode] = useState(code || "");
+  const [hasUnappliedChanges, setHasUnappliedChanges] = useState(false);
+
+  // Sync editableCode when new code comes in from AI
+  useEffect(() => {
+    if (code) {
+      setEditableCode(code);
+      setHasUnappliedChanges(false);
+    }
+  }, [code]);
+
+  const handleCodeChange = (newCode: string) => {
+    setEditableCode(newCode);
+    setHasUnappliedChanges(newCode !== code);
+  };
+
+  const handleApplyChanges = () => {
+    setRefreshKey(prev => prev + 1);
+    setHasUnappliedChanges(false);
+  };
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
   };
 
   const handleOpenInNewTab = () => {
-    if (!code) return;
-    const html = generatePreviewHTML(code);
+    if (!editableCode) return;
+    const html = generatePreviewHTML(editableCode);
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
@@ -60,7 +81,7 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
         </div>
         <LivePreview 
           key={refreshKey}
-          code={code} 
+          code={editableCode} 
           componentName={componentName}
           deviceSize="desktop"
         />
@@ -135,9 +156,27 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
                   <Code2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>View Code</TooltipContent>
+              <TooltipContent>Edit Code</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {showCode && hasUnappliedChanges && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="icon"
+                    className="h-8 w-8 bg-primary hover:bg-primary/90"
+                    onClick={handleApplyChanges}
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Apply Changes</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           <TooltipProvider>
             <Tooltip>
@@ -211,15 +250,17 @@ export function PreviewPanel({ code, componentName, onClose }: PreviewPanelProps
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {showCode ? (
-          <ScrollArea className="h-full">
-            <pre className="p-4 text-sm font-mono text-foreground/80">
-              {code || "// No code to display"}
-            </pre>
-          </ScrollArea>
+          <div className="h-full bg-[#1e1e1e]">
+            <CodeEditor
+              value={editableCode}
+              onChange={handleCodeChange}
+              language="tsx"
+            />
+          </div>
         ) : (
           <LivePreview 
             key={refreshKey}
-            code={code} 
+            code={editableCode} 
             componentName={componentName}
             deviceSize={deviceSize}
           />
