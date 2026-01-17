@@ -92,6 +92,24 @@ export function generatePreviewHTML(code: string): string {
   
   <script type="text/babel" data-presets="react">
     try {
+      // Destructure React hooks and utilities for convenience
+      const {
+        useState, useEffect, useCallback, useMemo, useRef,
+        useContext, useReducer, useLayoutEffect, useImperativeHandle,
+        useDebugValue, useDeferredValue, useId, useInsertionEffect,
+        useSyncExternalStore, useTransition,
+        createContext, forwardRef, memo, lazy, Suspense,
+        Fragment, Children, cloneElement, createElement, isValidElement
+      } = React;
+      
+      // Mock router hooks (commonly used in generated code)
+      const useNavigate = () => (path) => console.log('Navigate to:', path);
+      const useLocation = () => ({ pathname: '/', search: '', hash: '' });
+      const useParams = () => ({});
+      
+      // Common utility function stubs
+      const cn = (...classes) => classes.filter(Boolean).join(' ');
+      
       // Destructure common icons for convenience
       const { 
         Menu, X, ChevronRight, ChevronDown, ChevronLeft, ChevronUp,
