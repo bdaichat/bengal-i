@@ -6,6 +6,11 @@ import { CodeEditor } from "@/components/editor/CodeEditor";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { 
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { 
   Monitor, 
   Tablet, 
   Smartphone, 
@@ -20,7 +25,9 @@ import {
   CloudOff,
   Loader2,
   Sun,
-  Moon
+  Moon,
+  Columns,
+  Eye
 } from "lucide-react";
 import {
   Tooltip,
@@ -50,6 +57,7 @@ interface PreviewPanelProps {
 
 type DeviceSize = "mobile" | "tablet" | "desktop";
 type ThemeMode = "light" | "dark";
+type ViewMode = "preview" | "code" | "split";
 
 export function PreviewPanel({ 
   code, 
@@ -61,7 +69,7 @@ export function PreviewPanel({
   const { isAuthenticated } = useAuthContext();
   const [deviceSize, setDeviceSize] = useState<DeviceSize>("desktop");
   const [themeMode, setThemeMode] = useState<ThemeMode>("light");
-  const [showCode, setShowCode] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("preview");
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [editableCode, setEditableCode] = useState(code || "");
@@ -307,23 +315,56 @@ export function PreviewPanel({
 
           <div className="w-px h-6 bg-border mx-1" />
 
+          {/* View Mode Toggle */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant={showCode ? "secondary" : "ghost"}
+                  variant={viewMode === "preview" ? "secondary" : "ghost"}
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => setShowCode(!showCode)}
+                  onClick={() => setViewMode("preview")}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Preview Only</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={viewMode === "split" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode("split")}
+                >
+                  <Columns className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Split View</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={viewMode === "code" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode("code")}
                 >
                   <Code2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Edit Code</TooltipContent>
+              <TooltipContent>Code Only</TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
-          {showCode && hasUnappliedChanges && (
+          {(viewMode === "code" || viewMode === "split") && hasUnappliedChanges && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -412,7 +453,7 @@ export function PreviewPanel({
       
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {showCode ? (
+        {viewMode === "code" ? (
           <div className="h-full bg-[#1e1e1e]">
             <CodeEditor
               value={editableCode}
@@ -420,6 +461,28 @@ export function PreviewPanel({
               language="tsx"
             />
           </div>
+        ) : viewMode === "split" ? (
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            <ResizablePanel defaultSize={50} minSize={25}>
+              <div className="h-full bg-[#1e1e1e]">
+                <CodeEditor
+                  value={editableCode}
+                  onChange={handleCodeChange}
+                  language="tsx"
+                />
+              </div>
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50} minSize={25}>
+              <LivePreview 
+                key={refreshKey}
+                code={editableCode} 
+                componentName={componentName}
+                deviceSize={deviceSize}
+                darkMode={themeMode === "dark"}
+              />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         ) : (
           <LivePreview 
             key={refreshKey}
