@@ -135,10 +135,20 @@ export function AuthForm({ mode, onSuccess, language = "en" }: AuthFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password" className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              {t.password}
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                {t.password}
+              </Label>
+              {mode === "signin" && (
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <Input
               id="password"
               type="password"
