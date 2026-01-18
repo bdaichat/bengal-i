@@ -8,7 +8,7 @@ export interface Profile {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
-  preferred_language: string;
+  preferred_language: string | null;
 }
 
 export function useAuth() {
