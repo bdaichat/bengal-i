@@ -120,14 +120,34 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       // Common utility function stubs
       const cn = (...classes) => classes.filter(Boolean).join(' ');
       
-      // Destructure common icons for convenience
+      // Destructure common icons for convenience - expanded list
       const { 
+        // Navigation
         Menu, X, ChevronRight, ChevronDown, ChevronLeft, ChevronUp,
-        Check, Plus, Minus, Search, Settings, User, Home, Mail,
-        Phone, MapPin, Calendar, Clock, Star, Heart, Share2,
+        ArrowRight, ArrowLeft, ArrowUp, ArrowDown,
+        // Actions
+        Check, Plus, Minus, Search, Settings, Filter,
         Download, Upload, Edit, Trash2, Copy, Save, Send,
-        ArrowRight, ArrowLeft, ExternalLink, Link, Image,
-        Play, Pause, Volume2, VolumeX, Maximize, Minimize
+        MoreHorizontal, MoreVertical, Grip, GripVertical,
+        // User & Social
+        User, Users, Github, Linkedin, Twitter, Facebook, Instagram, Youtube,
+        // Communication
+        Mail, Phone, MessageCircle, MessageSquare, AtSign,
+        // Location & Time
+        MapPin, Calendar, Clock, Globe,
+        // Media
+        Image, Play, Pause, Volume2, VolumeX, Maximize, Minimize,
+        // Status
+        AlertCircle, AlertTriangle, Info, HelpCircle, CheckCircle, XCircle,
+        Star, Heart, Share2,
+        // Files
+        File, FileText, Folder, FolderOpen, Archive,
+        // Links
+        ExternalLink, Link,
+        // Home & Navigation
+        Home, Briefcase, BookOpen, Award,
+        // Theme & Code
+        Sun, Moon, Code, Code2, Terminal, Zap, Eye, EyeOff, Sparkles
       } = window.lucide || {};
       
       // Common UI component stubs
