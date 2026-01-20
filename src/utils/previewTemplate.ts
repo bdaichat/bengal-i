@@ -158,6 +158,78 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       return null;
     };
     
+    // Syntax highlighting for code snippets
+    window.__highlightSyntax = function(code, darkMode) {
+      const colors = {
+        keyword: darkMode ? '#c084fc' : '#7c3aed',      // purple
+        string: darkMode ? '#4ade80' : '#16a34a',        // green
+        comment: darkMode ? '#6b7280' : '#9ca3af',       // gray
+        number: darkMode ? '#fb923c' : '#ea580c',        // orange
+        function: darkMode ? '#60a5fa' : '#2563eb',      // blue
+        operator: darkMode ? '#f472b6' : '#db2777',      // pink
+        jsx: darkMode ? '#22d3ee' : '#0891b2',           // cyan
+        property: darkMode ? '#a78bfa' : '#7c3aed',      // violet
+      };
+      
+      // Escape HTML first
+      let escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
+      // Order matters - comments first to avoid highlighting inside comments
+      const patterns = [
+        // Comments (single line and multi-line)
+        { regex: /(\/\/[^\\n]*)/g, color: colors.comment },
+        { regex: /(\/\\*[\\s\\S]*?\\*\/)/g, color: colors.comment },
+        // Strings (double, single, template)
+        { regex: /("(?:[^"\\\\]|\\\\.)*")/g, color: colors.string },
+        { regex: /('(?:[^'\\\\]|\\\\.)*')/g, color: colors.string },
+        { regex: /(\`(?:[^\`\\\\]|\\\\.)*\`)/g, color: colors.string },
+        // JSX tags
+        { regex: /(&lt;\\/?)([A-Z][a-zA-Z0-9]*)/g, replace: \`$1<span style="color:\${colors.jsx}">$2</span>\` },
+        { regex: /(&lt;\\/?)([a-z][a-zA-Z0-9-]*)/g, replace: \`$1<span style="color:\${colors.jsx}">$2</span>\` },
+        // Keywords
+        { regex: /\\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|try|catch|throw|new|class|extends|import|export|from|default|async|await|typeof|instanceof|in|of|true|false|null|undefined|this|super)\\b/g, color: colors.keyword },
+        // Numbers
+        { regex: /\\b(\\d+\\.?\\d*)\\b/g, color: colors.number },
+        // Function calls
+        { regex: /\\b([a-zA-Z_$][a-zA-Z0-9_$]*)\\s*(?=\\()/g, color: colors.function },
+        // Arrow functions and operators
+        { regex: /(=&gt;|===|!==|==|!=|&lt;=|&gt;=|&&|\\|\\||\\?\\?|\\?\\.|\\.\\.\\.|\\+\\+|--)/g, color: colors.operator },
+      ];
+      
+      patterns.forEach(p => {
+        if (p.replace) {
+          escaped = escaped.replace(p.regex, p.replace);
+        } else if (p.color) {
+          escaped = escaped.replace(p.regex, \`<span style="color:\${p.color}">$1</span>\`);
+        }
+      });
+      
+      return escaped;
+    };
+    
+    // Retry function to re-render the code
+    window.__retryRender = function() {
+      if (!window.__userCode) {
+        location.reload();
+        return;
+      }
+      try {
+        document.getElementById('root').innerHTML = '<div class="preview-loading">Retrying...</div>';
+        // Re-evaluate the code by recreating the script
+        const script = document.createElement('script');
+        script.type = 'text/babel';
+        script.setAttribute('data-presets', 'react');
+        script.textContent = window.__originalScript || '';
+        document.body.appendChild(script);
+        // Trigger Babel to process it
+        if (window.Babel) {
+          setTimeout(() => location.reload(), 100);
+        }
+      } catch (e) {
+        location.reload();
+      }
+    };
+    
     window.__renderError = function(title, message, stack, hint, lineInfo) {
       const root = document.getElementById('root');
       const darkMode = document.documentElement.classList.contains('dark');
@@ -170,6 +242,9 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       const codeBg = darkMode ? '#0c0a09' : '#fff';
       const errorLineBg = darkMode ? '#7f1d1d' : '#fee2e2';
       const lineNumColor = darkMode ? '#57534e' : '#a8a29e';
+      const retryBtnBg = darkMode ? '#1e3a5f' : '#dbeafe';
+      const retryBtnBorder = darkMode ? '#2563eb' : '#93c5fd';
+      const retryBtnText = darkMode ? '#60a5fa' : '#1d4ed8';
       
       // Try to get code snippet
       const extractedLine = lineInfo || window.__extractLineNumber(stack);
@@ -185,17 +260,14 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
             ? \`background: \${errorLineBg}; border-left: 3px solid \${text}; margin-left: -3px; padding-left: 3px;\`
             : '';
           const indicator = l.isError ? ' → ' : '   ';
-          return \`<div style="\${lineStyle}"><span style="color: \${lineNumColor}; user-select: none; display: inline-block; width: 35px; text-align: right; margin-right: 8px;">\${l.num}</span><span style="color: \${l.isError ? text : muted};">\${indicator}</span>\${escapeHtml(l.code)}</div>\`;
+          const highlightedCode = window.__highlightSyntax(l.code, darkMode);
+          return \`<div style="\${lineStyle}"><span style="color: \${lineNumColor}; user-select: none; display: inline-block; width: 35px; text-align: right; margin-right: 8px;">\${l.num}</span><span style="color: \${l.isError ? text : muted};">\${indicator}</span>\${highlightedCode}</div>\`;
         }).join('');
         snippetHtml = \`
           <div style="margin: 12px 0;">
             <div style="font-size: 11px; color: \${muted}; margin-bottom: 6px;">Error at line \${snippet.errorLine}:</div>
-            <pre style="margin: 0; padding: 10px; background: \${codeBg}; border-radius: 6px; font-size: 12px; overflow-x: auto; line-height: 1.5;">\${snippetLines}</pre>
+            <pre style="margin: 0; padding: 10px; background: \${codeBg}; border-radius: 6px; font-size: 12px; overflow-x: auto; line-height: 1.6;">\${snippetLines}</pre>
           </div>\`;
-      }
-      
-      function escapeHtml(str) {
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       }
       
       root.innerHTML = \`
@@ -208,18 +280,33 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
               <strong style="font-size: 14px;">\${title}</strong>
               \${extractedLine ? \`<span style="font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; padding: 2px 6px; border-radius: 3px;">Line \${extractedLine.line}\${extractedLine.column ? ':' + extractedLine.column : ''}</span>\` : ''}
             </div>
-            <button id="__copyErrorBtn" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; border-radius: 4px; color: \${text}; cursor: pointer; transition: opacity 0.2s;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              <span>Copy Error</span>
-            </button>
+            <div style="display: flex; gap: 8px;">
+              <button id="__retryBtn" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; background: \${retryBtnBg}; border: 1px solid \${retryBtnBorder}; border-radius: 4px; color: \${retryBtnText}; cursor: pointer; transition: opacity 0.2s;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
+                </svg>
+                <span>Retry</span>
+              </button>
+              <button id="__copyErrorBtn" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; border-radius: 4px; color: \${text}; cursor: pointer; transition: opacity 0.2s;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+                <span>Copy Error</span>
+              </button>
+            </div>
           </div>
           <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5;">\${message}</p>
           \${snippetHtml}
           \${hint ? \`<div style="background: \${darkMode ? '#292524' : '#fef9c3'}; color: \${darkMode ? '#fde68a' : '#854d0e'}; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;"><strong>💡 Hint:</strong> \${hint}</div>\` : ''}
           \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Full stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${codeBg}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
         </div>\`;
+      
+      // Attach retry handler
+      document.getElementById('__retryBtn')?.addEventListener('click', function() {
+        this.querySelector('span').textContent = 'Retrying...';
+        this.disabled = true;
+        setTimeout(() => window.__retryRender(), 200);
+      });
       
       // Attach copy handler
       document.getElementById('__copyErrorBtn')?.addEventListener('click', function() {
