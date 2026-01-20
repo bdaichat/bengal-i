@@ -87,8 +87,11 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       }
     };
     
-    // Enhanced error handling with component detection
+    // Enhanced error handling with component detection and code snippets
     window.__missingComponents = [];
+    window.__userCode = '';
+    window.__codeLineOffset = 0;
+    
     window.__formatStack = function(stack) {
       if (!stack) return '';
       return stack
@@ -96,6 +99,48 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         .filter(line => !line.includes('node_modules') && !line.includes('unpkg.com'))
         .slice(0, 10)
         .join('\\n');
+    };
+    
+    window.__extractLineNumber = function(stack) {
+      if (!stack) return null;
+      // Match patterns like "at eval:123:45" or "<anonymous>:123:45" or "Babel:123:45"
+      const patterns = [
+        /at\\s+.*?:?(\\d+):(\\d+)/,
+        /<anonymous>:(\\d+):(\\d+)/,
+        /eval.*?:(\\d+):(\\d+)/,
+        /Babel.*?:(\\d+):(\\d+)/,
+        /:?(\\d+):(\\d+)\\)?$/m
+      ];
+      for (const pattern of patterns) {
+        const match = stack.match(pattern);
+        if (match && parseInt(match[1]) > 0) {
+          return { line: parseInt(match[1]), column: parseInt(match[2]) };
+        }
+      }
+      return null;
+    };
+    
+    window.__getCodeSnippet = function(lineNum, contextLines = 3) {
+      if (!window.__userCode || !lineNum) return null;
+      const lines = window.__userCode.split('\\n');
+      const adjustedLine = lineNum - window.__codeLineOffset;
+      
+      if (adjustedLine < 1 || adjustedLine > lines.length) return null;
+      
+      const start = Math.max(0, adjustedLine - contextLines - 1);
+      const end = Math.min(lines.length, adjustedLine + contextLines);
+      
+      const snippetLines = [];
+      for (let i = start; i < end; i++) {
+        const lineNumber = i + 1;
+        const isErrorLine = lineNumber === adjustedLine;
+        snippetLines.push({
+          num: lineNumber,
+          code: lines[i],
+          isError: isErrorLine
+        });
+      }
+      return { lines: snippetLines, errorLine: adjustedLine };
     };
     
     window.__detectMissingComponent = function(message) {
@@ -113,7 +158,7 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       return null;
     };
     
-    window.__renderError = function(title, message, stack, hint) {
+    window.__renderError = function(title, message, stack, hint, lineInfo) {
       const root = document.getElementById('root');
       const darkMode = document.documentElement.classList.contains('dark');
       const bg = darkMode ? '#1c1917' : '#fef2f2';
@@ -122,9 +167,36 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       const muted = darkMode ? '#a8a29e' : '#78716c';
       const btnBg = darkMode ? '#292524' : '#fef2f2';
       const btnBorder = darkMode ? '#44403c' : '#fecaca';
+      const codeBg = darkMode ? '#0c0a09' : '#fff';
+      const errorLineBg = darkMode ? '#7f1d1d' : '#fee2e2';
+      const lineNumColor = darkMode ? '#57534e' : '#a8a29e';
+      
+      // Try to get code snippet
+      const extractedLine = lineInfo || window.__extractLineNumber(stack);
+      const snippet = extractedLine ? window.__getCodeSnippet(extractedLine.line) : null;
       
       // Store error for copy function
-      window.__lastError = { title, message, stack, hint: hint?.replace(/<[^>]*>/g, '') };
+      window.__lastError = { title, message, stack, hint: hint?.replace(/<[^>]*>/g, ''), snippet };
+      
+      let snippetHtml = '';
+      if (snippet && snippet.lines.length > 0) {
+        const snippetLines = snippet.lines.map(l => {
+          const lineStyle = l.isError 
+            ? \`background: \${errorLineBg}; border-left: 3px solid \${text}; margin-left: -3px; padding-left: 3px;\`
+            : '';
+          const indicator = l.isError ? ' → ' : '   ';
+          return \`<div style="\${lineStyle}"><span style="color: \${lineNumColor}; user-select: none; display: inline-block; width: 35px; text-align: right; margin-right: 8px;">\${l.num}</span><span style="color: \${l.isError ? text : muted};">\${indicator}</span>\${escapeHtml(l.code)}</div>\`;
+        }).join('');
+        snippetHtml = \`
+          <div style="margin: 12px 0;">
+            <div style="font-size: 11px; color: \${muted}; margin-bottom: 6px;">Error at line \${snippet.errorLine}:</div>
+            <pre style="margin: 0; padding: 10px; background: \${codeBg}; border-radius: 6px; font-size: 12px; overflow-x: auto; line-height: 1.5;">\${snippetLines}</pre>
+          </div>\`;
+      }
+      
+      function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
       
       root.innerHTML = \`
         <div style="padding: 20px; background: \${bg}; border: 1px solid \${border}; border-radius: 8px; color: \${text}; margin: 20px; font-family: system-ui, monospace;">
@@ -134,6 +206,7 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
               <strong style="font-size: 14px;">\${title}</strong>
+              \${extractedLine ? \`<span style="font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; padding: 2px 6px; border-radius: 3px;">Line \${extractedLine.line}\${extractedLine.column ? ':' + extractedLine.column : ''}</span>\` : ''}
             </div>
             <button id="__copyErrorBtn" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; border-radius: 4px; color: \${text}; cursor: pointer; transition: opacity 0.2s;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -143,14 +216,19 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
             </button>
           </div>
           <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5;">\${message}</p>
+          \${snippetHtml}
           \${hint ? \`<div style="background: \${darkMode ? '#292524' : '#fef9c3'}; color: \${darkMode ? '#fde68a' : '#854d0e'}; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;"><strong>💡 Hint:</strong> \${hint}</div>\` : ''}
-          \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${darkMode ? '#0c0a09' : '#fff'}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
+          \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Full stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${codeBg}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
         </div>\`;
       
       // Attach copy handler
       document.getElementById('__copyErrorBtn')?.addEventListener('click', function() {
         const e = window.__lastError;
-        const text = [e.title, e.message, e.hint ? 'Hint: ' + e.hint : '', e.stack ? 'Stack:\\n' + e.stack : ''].filter(Boolean).join('\\n\\n');
+        let snippetText = '';
+        if (e.snippet && e.snippet.lines) {
+          snippetText = 'Code (line ' + e.snippet.errorLine + '):\\n' + e.snippet.lines.map(l => (l.isError ? '→ ' : '  ') + l.num + ': ' + l.code).join('\\n');
+        }
+        const text = [e.title, e.message, snippetText, e.hint ? 'Hint: ' + e.hint : '', e.stack ? 'Stack:\\n' + e.stack : ''].filter(Boolean).join('\\n\\n');
         navigator.clipboard.writeText(text).then(() => {
           this.querySelector('span').textContent = 'Copied!';
           setTimeout(() => { this.querySelector('span').textContent = 'Copy Error'; }, 2000);
@@ -177,11 +255,13 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         }
       }
       
+      const lineInfo = lineno > 0 ? { line: lineno, column: colno } : null;
       window.__renderError(
         'Runtime Error',
         displayMessage,
         error ? window.__formatStack(error.stack) : (lineno ? \`at line \${lineno}, column \${colno}\` : null),
-        hint
+        hint,
+        lineInfo
       );
       return true;
     };
@@ -584,6 +664,10 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         <section className={\`py-12 md:py-24 \${className}\`} {...props}>{children}</section>
       );
 
+      // Store user's code for error display (line offset accounts for all code above this point)
+      window.__userCode = ${JSON.stringify(code)};
+      window.__codeLineOffset = 0; // User code starts at line 1 in stored code
+      
       // User's code wrapped in ErrorBoundary
       ${code}
       
@@ -603,9 +687,17 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       if (comp) {
         hint = \`<strong>\${comp}</strong> is not defined. Add it to the code or check the import.\`;
       } else if (error.message.includes('Unexpected token')) {
+        const match = error.message.match(/(\\d+):(\\d+)/);
         hint = 'Syntax error in the code. Check for missing brackets, quotes, or semicolons.';
+      } else if (error.message.includes('is not defined')) {
+        hint = 'A variable or component is referenced but not defined. Check spelling and ensure it exists.';
       }
-      window.__renderError?.('Compilation Error', error.message, window.__formatStack?.(error.stack), hint) 
+      
+      // Extract line info from compilation errors
+      const lineMatch = error.stack?.match(/(\\d+):(\\d+)/);
+      const lineInfo = lineMatch ? { line: parseInt(lineMatch[1]), column: parseInt(lineMatch[2]) } : null;
+      
+      window.__renderError?.('Compilation Error', error.message, window.__formatStack?.(error.stack), hint, lineInfo) 
         || (document.getElementById('root').innerHTML = '<div class="preview-error">Error: ' + error.message + '</div>');
     }
   </script>
