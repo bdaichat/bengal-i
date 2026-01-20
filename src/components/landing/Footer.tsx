@@ -1,7 +1,7 @@
-import React from "react";
+import { forwardRef } from "react";
 import { Sparkles, Github, Twitter, Linkedin, Youtube } from "lucide-react";
 
-const Footer = React.forwardRef<HTMLElement>((props, ref) => {
+const Footer = forwardRef<HTMLElement>((props, ref) => {
   return (
     <footer ref={ref} className="bg-card border-t border-border py-16" {...props}>
       <div className="container px-4">

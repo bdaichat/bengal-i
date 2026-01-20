@@ -1,8 +1,8 @@
-import React from "react";
+import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 
-const CTASection = React.forwardRef<HTMLElement>((props, ref) => {
+const CTASection = forwardRef<HTMLElement>((props, ref) => {
   return (
     <section ref={ref} className="py-24 relative overflow-hidden" {...props}>
       {/* Background effects */}
