@@ -1,9 +1,10 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 
-const CTASection = () => {
+const CTASection = React.forwardRef<HTMLElement>((props, ref) => {
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section ref={ref} className="py-24 relative overflow-hidden" {...props}>
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-bengal opacity-10" />
       <div className="absolute top-10 left-1/4 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
@@ -62,6 +63,8 @@ const CTASection = () => {
       </div>
     </section>
   );
-};
+});
+
+CTASection.displayName = "CTASection";
 
 export default CTASection;

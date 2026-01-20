@@ -1,8 +1,9 @@
+import React from "react";
 import { Sparkles, Github, Twitter, Linkedin, Youtube } from "lucide-react";
 
-const Footer = () => {
+const Footer = React.forwardRef<HTMLElement>((props, ref) => {
   return (
-    <footer className="bg-card border-t border-border py-16">
+    <footer ref={ref} className="bg-card border-t border-border py-16" {...props}>
       <div className="container px-4">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
@@ -86,6 +87,8 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+});
+
+Footer.displayName = "Footer";
 
 export default Footer;
