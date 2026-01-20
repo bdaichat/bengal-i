@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 const Header = () => {
@@ -37,10 +38,14 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">Log In</Button>
-            <Button className="bg-primary hover:bg-primary/90">
-              <span className="font-bengali">শুরু করুন</span>
-            </Button>
+            <Link to="/signin">
+              <Button variant="ghost">Log In</Button>
+            </Link>
+            <Link to="/signup">
+              <Button className="bg-primary hover:bg-primary/90">
+                <span className="font-bengali">শুরু করুন</span>
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -69,10 +74,14 @@ const Header = () => {
                 ডকুমেন্টেশন
               </a>
               <div className="flex flex-col gap-2 pt-4">
-                <Button variant="outline" className="w-full">Log In</Button>
-                <Button className="w-full bg-primary hover:bg-primary/90">
-                  <span className="font-bengali">শুরু করুন</span>
-                </Button>
+                <Link to="/signin">
+                  <Button variant="outline" className="w-full">Log In</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button className="w-full bg-primary hover:bg-primary/90">
+                    <span className="font-bengali">শুরু করুন</span>
+                  </Button>
+                </Link>
               </div>
             </nav>
           </div>
