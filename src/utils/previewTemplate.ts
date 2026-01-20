@@ -207,6 +207,113 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       return escaped;
     };
     
+    // Generate quick fix suggestions based on error
+    window.__getQuickFixes = function(message, componentName) {
+      const fixes = [];
+      const msg = String(message).toLowerCase();
+      
+      if (componentName) {
+        fixes.push({
+          icon: '📦',
+          title: \`Define \${componentName} component\`,
+          code: \`const \${componentName} = () => {\\n  return (\\n    <div>\${componentName} Component</div>\\n  );\\n};\`,
+          description: 'Add a basic component definition'
+        });
+        fixes.push({
+          icon: '📥',
+          title: \`Import \${componentName}\`,
+          code: \`import { \${componentName} } from './components/\${componentName}';\`,
+          description: 'Import from another file'
+        });
+      }
+      
+      if (msg.includes('undefined') || msg.includes('null')) {
+        fixes.push({
+          icon: '🛡️',
+          title: 'Add null check',
+          code: \`{data && <Component data={data} />}\\n// or\\n{data?.property}\\n// or\\nconst value = data ?? defaultValue;\`,
+          description: 'Use optional chaining or nullish coalescing'
+        });
+        fixes.push({
+          icon: '📋',
+          title: 'Initialize state with default',
+          code: \`const [data, setData] = useState([]);\\n// or\\nconst [data, setData] = useState({});\\n// or\\nconst [data, setData] = useState('');\`,
+          description: 'Provide initial state value'
+        });
+      }
+      
+      if (msg.includes('not a function')) {
+        fixes.push({
+          icon: '🔄',
+          title: 'Check export type',
+          code: \`// Named export:\\nexport const Component = () => {...};\\nimport { Component } from './file';\\n\\n// Default export:\\nexport default Component;\\nimport Component from './file';\`,
+          description: 'Match import style with export type'
+        });
+      }
+      
+      if (msg.includes('unexpected token') || msg.includes('syntax')) {
+        fixes.push({
+          icon: '🔍',
+          title: 'Check for missing brackets',
+          code: \`// Common issues:\\n// - Missing closing } or )\\n// - Missing return statement\\n// - Extra comma in object/array\\n// - Unclosed JSX tag\`,
+          description: 'Review syntax around the error line'
+        });
+        fixes.push({
+          icon: '✂️',
+          title: 'Wrap JSX in fragment',
+          code: \`return (\\n  <>\\n    <Component1 />\\n    <Component2 />\\n  </>\\n);\`,
+          description: 'Multiple elements need a parent'
+        });
+      }
+      
+      if (msg.includes('map') || msg.includes('foreach') || msg.includes('is not iterable')) {
+        fixes.push({
+          icon: '📦',
+          title: 'Ensure array before mapping',
+          code: \`{Array.isArray(items) && items.map(item => (\\n  <div key={item.id}>{item.name}</div>\\n))}\\n// or\\n{(items || []).map(...)}\`,
+          description: 'Check if value is an array first'
+        });
+      }
+      
+      if (msg.includes('key') && msg.includes('unique')) {
+        fixes.push({
+          icon: '🔑',
+          title: 'Add unique key prop',
+          code: \`{items.map((item, index) => (\\n  <div key={item.id}>{item.name}</div>\\n  // or use index as last resort:\\n  <div key={index}>{item.name}</div>\\n))}\`,
+          description: 'Each list item needs a unique key'
+        });
+      }
+      
+      if (msg.includes('hook') || msg.includes('usestate') || msg.includes('useeffect')) {
+        fixes.push({
+          icon: '⚓',
+          title: 'Check hook rules',
+          code: \`// Hooks must be called:\\n// 1. At the top level of function component\\n// 2. Not inside conditions, loops, or nested functions\\n// 3. Only in React function components or custom hooks\`,
+          description: 'Hooks have specific usage rules'
+        });
+      }
+      
+      // Always add general fixes
+      if (fixes.length === 0) {
+        fixes.push({
+          icon: '🔄',
+          title: 'Refresh the preview',
+          code: null,
+          action: 'retry',
+          description: 'Try re-rendering the component'
+        });
+      }
+      
+      fixes.push({
+        icon: '📝',
+        title: 'Check console for details',
+        code: \`console.log('Debug:', variableName);\\n// Add this before the error line to inspect values\`,
+        description: 'Add logging to debug'
+      });
+      
+      return fixes.slice(0, 5); // Max 5 fixes
+    };
+    
     // Retry function to re-render the code
     window.__retryRender = function() {
       if (!window.__userCode) {
@@ -245,13 +352,21 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       const retryBtnBg = darkMode ? '#1e3a5f' : '#dbeafe';
       const retryBtnBorder = darkMode ? '#2563eb' : '#93c5fd';
       const retryBtnText = darkMode ? '#60a5fa' : '#1d4ed8';
+      const fixBg = darkMode ? '#14532d' : '#dcfce7';
+      const fixBorder = darkMode ? '#166534' : '#86efac';
+      const fixText = darkMode ? '#4ade80' : '#166534';
+      const fixHoverBg = darkMode ? '#166534' : '#bbf7d0';
       
       // Try to get code snippet
       const extractedLine = lineInfo || window.__extractLineNumber(stack);
       const snippet = extractedLine ? window.__getCodeSnippet(extractedLine.line) : null;
       
+      // Get component name from error for quick fixes
+      const componentName = window.__detectMissingComponent(message);
+      const quickFixes = window.__getQuickFixes(message, componentName);
+      
       // Store error for copy function
-      window.__lastError = { title, message, stack, hint: hint?.replace(/<[^>]*>/g, ''), snippet };
+      window.__lastError = { title, message, stack, hint: hint?.replace(/<[^>]*>/g, ''), snippet, quickFixes };
       
       let snippetHtml = '';
       if (snippet && snippet.lines.length > 0) {
@@ -270,8 +385,38 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
           </div>\`;
       }
       
+      // Generate Quick Fixes HTML
+      let quickFixesHtml = '';
+      if (quickFixes && quickFixes.length > 0) {
+        const fixItems = quickFixes.map((fix, i) => \`
+          <div class="quick-fix-item" data-fix-index="\${i}" style="padding: 10px; border: 1px solid \${fixBorder}; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; background: \${fixBg};">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 14px;">\${fix.icon}</span>
+              <strong style="font-size: 12px; color: \${fixText};">\${fix.title}</strong>
+              \${fix.action === 'retry' ? '<span style="font-size: 10px; background: ' + retryBtnBg + '; color: ' + retryBtnText + '; padding: 2px 6px; border-radius: 3px; margin-left: auto;">Click to run</span>' : '<span style="font-size: 10px; background: ' + btnBg + '; color: ' + muted + '; padding: 2px 6px; border-radius: 3px; margin-left: auto;">Click to copy</span>'}
+            </div>
+            <div style="font-size: 11px; color: \${muted};">\${fix.description}</div>
+            \${fix.code ? \`<pre style="margin: 8px 0 0 0; padding: 8px; background: \${codeBg}; border-radius: 4px; font-size: 11px; overflow-x: auto; color: \${muted}; white-space: pre-wrap;">\${window.__highlightSyntax(fix.code, darkMode)}</pre>\` : ''}
+          </div>
+        \`).join('');
+        
+        quickFixesHtml = \`
+          <details style="margin-top: 12px;" open>
+            <summary style="cursor: pointer; color: \${fixText}; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 8px 0;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              Quick Fixes (\${quickFixes.length})
+            </summary>
+            <div style="margin-top: 8px;" id="__quickFixesContainer">
+              \${fixItems}
+            </div>
+          </details>
+        \`;
+      }
+      
       root.innerHTML = \`
-        <div style="padding: 20px; background: \${bg}; border: 1px solid \${border}; border-radius: 8px; color: \${text}; margin: 20px; font-family: system-ui, monospace;">
+        <div style="padding: 20px; background: \${bg}; border: 1px solid \${border}; border-radius: 8px; color: \${text}; margin: 20px; font-family: system-ui, monospace; max-height: 90vh; overflow-y: auto;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -298,8 +443,12 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
           <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5;">\${message}</p>
           \${snippetHtml}
           \${hint ? \`<div style="background: \${darkMode ? '#292524' : '#fef9c3'}; color: \${darkMode ? '#fde68a' : '#854d0e'}; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;"><strong>💡 Hint:</strong> \${hint}</div>\` : ''}
+          \${quickFixesHtml}
           \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Full stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${codeBg}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
-        </div>\`;
+        </div>
+        <style>
+          .quick-fix-item:hover { background: \${fixHoverBg} !important; transform: translateX(4px); }
+        </style>\`;
       
       // Attach retry handler
       document.getElementById('__retryBtn')?.addEventListener('click', function() {
@@ -319,6 +468,36 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         navigator.clipboard.writeText(text).then(() => {
           this.querySelector('span').textContent = 'Copied!';
           setTimeout(() => { this.querySelector('span').textContent = 'Copy Error'; }, 2000);
+        });
+      });
+      
+      // Attach quick fix click handlers
+      document.querySelectorAll('.quick-fix-item').forEach(item => {
+        item.addEventListener('click', function() {
+          const index = parseInt(this.dataset.fixIndex);
+          const fix = window.__lastError.quickFixes[index];
+          if (fix.action === 'retry') {
+            window.__retryRender();
+          } else if (fix.code) {
+            navigator.clipboard.writeText(fix.code).then(() => {
+              const originalBg = this.style.background;
+              this.style.background = '\${darkMode ? '#166534' : '#86efac'}';
+              const badge = this.querySelector('span[style*="margin-left: auto"]');
+              if (badge) {
+                badge.textContent = 'Copied!';
+                badge.style.background = '\${retryBtnBg}';
+                badge.style.color = '\${retryBtnText}';
+              }
+              setTimeout(() => {
+                this.style.background = originalBg;
+                if (badge) {
+                  badge.textContent = 'Click to copy';
+                  badge.style.background = '\${btnBg}';
+                  badge.style.color = '\${muted}';
+                }
+              }, 2000);
+            });
+          }
         });
       });
     };
