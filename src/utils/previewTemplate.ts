@@ -120,19 +120,42 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       const border = darkMode ? '#7f1d1d' : '#fecaca';
       const text = darkMode ? '#fca5a5' : '#dc2626';
       const muted = darkMode ? '#a8a29e' : '#78716c';
+      const btnBg = darkMode ? '#292524' : '#fef2f2';
+      const btnBorder = darkMode ? '#44403c' : '#fecaca';
+      
+      // Store error for copy function
+      window.__lastError = { title, message, stack, hint: hint?.replace(/<[^>]*>/g, '') };
       
       root.innerHTML = \`
         <div style="padding: 20px; background: \${bg}; border: 1px solid \${border}; border-radius: 8px; color: \${text}; margin: 20px; font-family: system-ui, monospace;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <strong style="font-size: 14px;">\${title}</strong>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <strong style="font-size: 14px;">\${title}</strong>
+            </div>
+            <button id="__copyErrorBtn" style="display: flex; align-items: center; gap: 4px; padding: 6px 10px; font-size: 11px; background: \${btnBg}; border: 1px solid \${btnBorder}; border-radius: 4px; color: \${text}; cursor: pointer; transition: opacity 0.2s;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>Copy Error</span>
+            </button>
           </div>
           <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5;">\${message}</p>
           \${hint ? \`<div style="background: \${darkMode ? '#292524' : '#fef9c3'}; color: \${darkMode ? '#fde68a' : '#854d0e'}; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;"><strong>💡 Hint:</strong> \${hint}</div>\` : ''}
           \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${darkMode ? '#0c0a09' : '#fff'}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
         </div>\`;
+      
+      // Attach copy handler
+      document.getElementById('__copyErrorBtn')?.addEventListener('click', function() {
+        const e = window.__lastError;
+        const text = [e.title, e.message, e.hint ? 'Hint: ' + e.hint : '', e.stack ? 'Stack:\\n' + e.stack : ''].filter(Boolean).join('\\n\\n');
+        navigator.clipboard.writeText(text).then(() => {
+          this.querySelector('span').textContent = 'Copied!';
+          setTimeout(() => { this.querySelector('span').textContent = 'Copy Error'; }, 2000);
+        });
+      });
     };
     
     window.onerror = function(message, source, lineno, colno, error) {
@@ -282,27 +305,51 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
             const muted = darkMode ? '#a8a29e' : '#78716c';
             const hintBg = darkMode ? '#292524' : '#fef9c3';
             const hintText = darkMode ? '#fde68a' : '#854d0e';
+            const btnBg = darkMode ? '#292524' : '#fef2f2';
+            const btnBorder = darkMode ? '#44403c' : '#fecaca';
+            
+            const fullStack = stack + (componentStack ? '\\n\\nComponent Stack:' + componentStack : '');
+            
+            const handleCopy = () => {
+              const errorText = ['Component Error', msg, hint ? 'Hint: ' + hint : '', fullStack ? 'Stack:\\n' + fullStack : ''].filter(Boolean).join('\\n\\n');
+              navigator.clipboard.writeText(errorText).then(() => {
+                this.setState({ copied: true });
+                setTimeout(() => this.setState({ copied: false }), 2000);
+              });
+            };
             
             return React.createElement('div', {
               style: { padding: 20, background: bg, border: \`1px solid \${border}\`, borderRadius: 8, color: text, margin: 20, fontFamily: 'system-ui, monospace' }
             },
-              React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 } },
-                React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-                  React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
-                  React.createElement('line', { x1: 12, y1: 8, x2: 12, y2: 12 }),
-                  React.createElement('line', { x1: 12, y1: 16, x2: 12.01, y2: 16 })
+              React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 } },
+                React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                  React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                    React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
+                    React.createElement('line', { x1: 12, y1: 8, x2: 12, y2: 12 }),
+                    React.createElement('line', { x1: 12, y1: 16, x2: 12.01, y2: 16 })
+                  ),
+                  React.createElement('strong', { style: { fontSize: 14 } }, 'Component Error')
                 ),
-                React.createElement('strong', { style: { fontSize: 14 } }, 'Component Error')
+                React.createElement('button', {
+                  onClick: handleCopy,
+                  style: { display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', fontSize: 11, background: btnBg, border: \`1px solid \${btnBorder}\`, borderRadius: 4, color: text, cursor: 'pointer' }
+                },
+                  React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                    React.createElement('rect', { x: 9, y: 9, width: 13, height: 13, rx: 2, ry: 2 }),
+                    React.createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' })
+                  ),
+                  this.state.copied ? 'Copied!' : 'Copy Error'
+                )
               ),
               React.createElement('p', { style: { margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 } }, msg),
               hint && React.createElement('div', { 
                 style: { background: hintBg, color: hintText, padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 12 }
               }, '💡 Hint: ', hint),
-              (stack || componentStack) && React.createElement('details', { style: { marginTop: 8 } },
+              fullStack && React.createElement('details', { style: { marginTop: 8 } },
                 React.createElement('summary', { style: { cursor: 'pointer', color: muted, fontSize: 12 } }, 'Stack trace'),
                 React.createElement('pre', { 
                   style: { marginTop: 8, padding: 10, background: darkMode ? '#0c0a09' : '#fff', borderRadius: 4, fontSize: 11, overflowX: 'auto', whiteSpace: 'pre-wrap', color: muted }
-                }, stack + (componentStack ? '\\n\\nComponent Stack:' + componentStack : ''))
+                }, fullStack)
               )
             );
           }
