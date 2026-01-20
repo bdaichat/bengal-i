@@ -87,11 +87,81 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
       }
     };
     
-    // Error handling
-    window.onerror = function(message, source, lineno, colno, error) {
+    // Enhanced error handling with component detection
+    window.__missingComponents = [];
+    window.__formatStack = function(stack) {
+      if (!stack) return '';
+      return stack
+        .split('\\n')
+        .filter(line => !line.includes('node_modules') && !line.includes('unpkg.com'))
+        .slice(0, 10)
+        .join('\\n');
+    };
+    
+    window.__detectMissingComponent = function(message) {
+      const patterns = [
+        /Element type is invalid.*?Check the render method of \`?([A-Z][a-zA-Z0-9]*)\`?/,
+        /([A-Z][a-zA-Z0-9]*) is not defined/,
+        /Cannot read properties of undefined.*?reading '([a-zA-Z]+)'/,
+        /Component is not a function/,
+        /'([A-Z][a-zA-Z0-9]*)' is not a function/
+      ];
+      for (const p of patterns) {
+        const m = message.match(p);
+        if (m) return m[1] || 'Unknown';
+      }
+      return null;
+    };
+    
+    window.__renderError = function(title, message, stack, hint) {
       const root = document.getElementById('root');
-      root.innerHTML = '<div class="preview-error">Error: ' + message + '</div>';
+      const darkMode = document.documentElement.classList.contains('dark');
+      const bg = darkMode ? '#1c1917' : '#fef2f2';
+      const border = darkMode ? '#7f1d1d' : '#fecaca';
+      const text = darkMode ? '#fca5a5' : '#dc2626';
+      const muted = darkMode ? '#a8a29e' : '#78716c';
+      
+      root.innerHTML = \`
+        <div style="padding: 20px; background: \${bg}; border: 1px solid \${border}; border-radius: 8px; color: \${text}; margin: 20px; font-family: system-ui, monospace;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <strong style="font-size: 14px;">\${title}</strong>
+          </div>
+          <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5;">\${message}</p>
+          \${hint ? \`<div style="background: \${darkMode ? '#292524' : '#fef9c3'}; color: \${darkMode ? '#fde68a' : '#854d0e'}; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px;"><strong>💡 Hint:</strong> \${hint}</div>\` : ''}
+          \${stack ? \`<details style="margin-top: 8px;"><summary style="cursor: pointer; color: \${muted}; font-size: 12px;">Stack trace</summary><pre style="margin-top: 8px; padding: 10px; background: \${darkMode ? '#0c0a09' : '#fff'}; border-radius: 4px; font-size: 11px; overflow-x: auto; white-space: pre-wrap; color: \${muted};">\${stack}</pre></details>\` : ''}
+        </div>\`;
+    };
+    
+    window.onerror = function(message, source, lineno, colno, error) {
+      const comp = window.__detectMissingComponent(String(message));
+      let hint = null;
+      if (comp) {
+        hint = \`The component <strong>\${comp}</strong> may not be defined or exported. Check imports and ensure it's a valid React component.\`;
+      } else if (String(message).includes('not a function')) {
+        hint = 'A component was imported but is not a valid function. Check default/named exports.';
+      }
+      window.__renderError(
+        'Runtime Error',
+        String(message),
+        error ? window.__formatStack(error.stack) : null,
+        hint
+      );
       return true;
+    };
+    
+    window.onunhandledrejection = function(event) {
+      const msg = event.reason?.message || String(event.reason);
+      const comp = window.__detectMissingComponent(msg);
+      let hint = comp ? \`Check if <strong>\${comp}</strong> is properly defined and exported.\` : null;
+      window.__renderError(
+        'Unhandled Promise Rejection',
+        msg,
+        event.reason?.stack ? window.__formatStack(event.reason.stack) : null,
+        hint
+      );
     };
     
     // Make common libraries available globally
@@ -176,23 +246,64 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         Bell, Lock, Unlock, Key, Shield, Loader2, RefreshCw, RotateCcw
       } = window.lucide || {};
       
-      // Error Boundary Component
+      // Enhanced Error Boundary Component with full stack + hints
       class ErrorBoundary extends React.Component {
         constructor(props) {
           super(props);
-          this.state = { hasError: false, error: null };
+          this.state = { hasError: false, error: null, errorInfo: null };
         }
         static getDerivedStateFromError(error) {
           return { hasError: true, error };
         }
         componentDidCatch(error, errorInfo) {
+          this.setState({ errorInfo });
           console.error('Preview Error:', error, errorInfo);
         }
         render() {
           if (this.state.hasError) {
-            return React.createElement('div', { className: 'preview-error' },
-              React.createElement('strong', null, 'Component Error: '),
-              this.state.error?.message || 'Unknown error occurred'
+            const msg = this.state.error?.message || 'Unknown error';
+            const comp = window.__detectMissingComponent?.(msg);
+            const stack = window.__formatStack?.(this.state.error?.stack) || '';
+            const componentStack = this.state.errorInfo?.componentStack || '';
+            
+            let hint = null;
+            if (comp) {
+              hint = \`The component <\${comp}> may not be defined. Ensure it is imported or declared.\`;
+            } else if (msg.includes('not a function')) {
+              hint = 'A component reference is invalid. Check that all imports use correct named/default exports.';
+            } else if (msg.includes('Cannot read properties')) {
+              hint = 'An object is undefined when accessed. Check initial state and conditional rendering.';
+            }
+            
+            const darkMode = document.documentElement.classList.contains('dark');
+            const bg = darkMode ? '#1c1917' : '#fef2f2';
+            const border = darkMode ? '#7f1d1d' : '#fecaca';
+            const text = darkMode ? '#fca5a5' : '#dc2626';
+            const muted = darkMode ? '#a8a29e' : '#78716c';
+            const hintBg = darkMode ? '#292524' : '#fef9c3';
+            const hintText = darkMode ? '#fde68a' : '#854d0e';
+            
+            return React.createElement('div', {
+              style: { padding: 20, background: bg, border: \`1px solid \${border}\`, borderRadius: 8, color: text, margin: 20, fontFamily: 'system-ui, monospace' }
+            },
+              React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 } },
+                React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
+                  React.createElement('circle', { cx: 12, cy: 12, r: 10 }),
+                  React.createElement('line', { x1: 12, y1: 8, x2: 12, y2: 12 }),
+                  React.createElement('line', { x1: 12, y1: 16, x2: 12.01, y2: 16 })
+                ),
+                React.createElement('strong', { style: { fontSize: 14 } }, 'Component Error')
+              ),
+              React.createElement('p', { style: { margin: '0 0 12px', fontSize: 13, lineHeight: 1.5 } }, msg),
+              hint && React.createElement('div', { 
+                style: { background: hintBg, color: hintText, padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 12 }
+              }, '💡 Hint: ', hint),
+              (stack || componentStack) && React.createElement('details', { style: { marginTop: 8 } },
+                React.createElement('summary', { style: { cursor: 'pointer', color: muted, fontSize: 12 } }, 'Stack trace'),
+                React.createElement('pre', { 
+                  style: { marginTop: 8, padding: 10, background: darkMode ? '#0c0a09' : '#fff', borderRadius: 4, fontSize: 11, overflowX: 'auto', whiteSpace: 'pre-wrap', color: muted }
+                }, stack + (componentStack ? '\\n\\nComponent Stack:' + componentStack : ''))
+              )
             );
           }
           return this.props.children;
@@ -415,11 +526,29 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
         <section className={\`py-12 md:py-24 \${className}\`} {...props}>{children}</section>
       );
 
-      // User's code
+      // User's code wrapped in ErrorBoundary
       ${code}
       
+      // Wrap the rendered component in ErrorBoundary if App exists
+      if (typeof App !== 'undefined') {
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+          React.createElement(ErrorBoundary, null,
+            React.createElement(App)
+          )
+        );
+      }
+      
     } catch (error) {
-      document.getElementById('root').innerHTML = '<div class="preview-error">Error: ' + error.message + '</div>';
+      const comp = window.__detectMissingComponent?.(error.message);
+      let hint = null;
+      if (comp) {
+        hint = \`<strong>\${comp}</strong> is not defined. Add it to the code or check the import.\`;
+      } else if (error.message.includes('Unexpected token')) {
+        hint = 'Syntax error in the code. Check for missing brackets, quotes, or semicolons.';
+      }
+      window.__renderError?.('Compilation Error', error.message, window.__formatStack?.(error.stack), hint) 
+        || (document.getElementById('root').innerHTML = '<div class="preview-error">Error: ' + error.message + '</div>');
     }
   </script>
 </body>
