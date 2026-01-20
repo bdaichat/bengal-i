@@ -1,13 +1,16 @@
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles } from "lucide-react";
+import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles, TrendingUp } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function Dashboard() {
   const { profile, user } = useAuthContext();
+  const { data: stats, isLoading } = useDashboardStats();
   const displayName = profile?.display_name || user?.email?.split("@")[0] || "User";
 
   const quickActions = [
@@ -95,26 +98,45 @@ export default function Dashboard() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-primary">-</div>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12 mb-1" />
+                ) : (
+                  <div className="text-2xl font-bold text-primary">{stats?.totalProjects ?? 0}</div>
+                )}
                 <p className="text-sm text-muted-foreground">Total Projects</p>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-primary">-</div>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12 mb-1" />
+                ) : (
+                  <div className="text-2xl font-bold text-primary">{stats?.totalChats ?? 0}</div>
+                )}
                 <p className="text-sm text-muted-foreground">Chat Sessions</p>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-primary">-</div>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12 mb-1" />
+                ) : (
+                  <div className="text-2xl font-bold text-primary">{stats?.totalMessages ?? 0}</div>
+                )}
                 <p className="text-sm text-muted-foreground">Messages Sent</p>
               </CardContent>
             </Card>
             <Card className="border-border/50 bg-card/50">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-primary">-</div>
-                <p className="text-sm text-muted-foreground">Code Generated</p>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-12 mb-1" />
+                ) : (
+                  <div className="text-2xl font-bold text-primary flex items-center gap-1">
+                    {stats?.recentActivity ?? 0}
+                    <TrendingUp className="h-4 w-4" />
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">Active This Week</p>
               </CardContent>
             </Card>
           </div>
