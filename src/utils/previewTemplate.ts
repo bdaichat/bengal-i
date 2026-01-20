@@ -159,17 +159,28 @@ export function generatePreviewHTML(code: string, darkMode: boolean = false): st
     };
     
     window.onerror = function(message, source, lineno, colno, error) {
-      const comp = window.__detectMissingComponent(String(message));
+      // Handle generic "Script error" from cross-origin issues
+      let displayMessage = String(message);
       let hint = null;
-      if (comp) {
-        hint = \`The component <strong>\${comp}</strong> may not be defined or exported. Check imports and ensure it's a valid React component.\`;
-      } else if (String(message).includes('not a function')) {
-        hint = 'A component was imported but is not a valid function. Check default/named exports.';
+      
+      if (displayMessage === 'Script error.' || displayMessage === 'Script error') {
+        displayMessage = 'An error occurred in the preview code. This may be due to a syntax error, undefined variable, or component issue.';
+        hint = 'Check your code for: <strong>1)</strong> Undefined variables or components <strong>2)</strong> Syntax errors <strong>3)</strong> Missing imports. The preview runs in a sandboxed environment with limited error details.';
+      } else {
+        const comp = window.__detectMissingComponent(displayMessage);
+        if (comp) {
+          hint = \`The component <strong>\${comp}</strong> may not be defined or exported. Check imports and ensure it's a valid React component.\`;
+        } else if (displayMessage.includes('not a function')) {
+          hint = 'A component was imported but is not a valid function. Check default/named exports.';
+        } else if (displayMessage.includes('is not defined')) {
+          hint = 'A variable or component is used before being defined. Check spelling and imports.';
+        }
       }
+      
       window.__renderError(
         'Runtime Error',
-        String(message),
-        error ? window.__formatStack(error.stack) : null,
+        displayMessage,
+        error ? window.__formatStack(error.stack) : (lineno ? \`at line \${lineno}, column \${colno}\` : null),
         hint
       );
       return true;
