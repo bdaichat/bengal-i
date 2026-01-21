@@ -29,7 +29,7 @@ const steps = [
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-24">
+    <section id="docs" className="py-24 scroll-mt-16">
       <div className="container px-4">
         {/* Section header */}
         <div className="max-w-3xl mx-auto text-center mb-16">

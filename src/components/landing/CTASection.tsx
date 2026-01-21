@@ -4,7 +4,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 
 const CTASection = forwardRef<HTMLElement>((props, ref) => {
   return (
-    <section ref={ref} className="py-24 relative overflow-hidden" {...props}>
+    <section id="pricing" ref={ref} className="py-24 relative overflow-hidden scroll-mt-16" {...props}>
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-bengal opacity-10" />
       <div className="absolute top-10 left-1/4 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
