@@ -48,7 +48,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 bg-muted/30">
+    <section id="features" className="py-24 bg-muted/30 scroll-mt-16">
       <div className="container px-4">
         {/* Section header */}
         <div className="max-w-3xl mx-auto text-center mb-16">
