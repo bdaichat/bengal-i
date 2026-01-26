@@ -1,4 +1,5 @@
 import { MessageSquare, Code2, Rocket } from "lucide-react";
+import { motion } from "framer-motion";
 
 const steps = [
   {
@@ -32,7 +33,13 @@ const HowItWorksSection = () => {
     <section id="docs" className="py-24 scroll-mt-16">
       <div className="container px-4">
         {/* Section header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <motion.div 
+          className="max-w-3xl mx-auto text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
             <span className="font-bengali">কিভাবে কাজ করে?</span>
           </h2>
@@ -42,16 +49,33 @@ const HowItWorksSection = () => {
           <p className="text-muted-foreground mt-4 font-bengali">
             মাত্র ৩টি সহজ ধাপে আপনার অ্যাপ তৈরি করুন
           </p>
-        </div>
+        </motion.div>
 
         {/* Steps */}
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connecting line (desktop only) */}
-            <div className="hidden md:block absolute top-24 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary via-bengal-gold to-accent" />
+            <motion.div 
+              className="hidden md:block absolute top-24 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-primary via-bengal-gold to-accent"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            />
 
             {steps.map((step, index) => (
-              <div key={index} className="relative">
+              <motion.div 
+                key={index} 
+                className="relative"
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: index * 0.15,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+              >
                 <div className="flex flex-col items-center text-center">
                   {/* Step number circle */}
                   <div className="relative z-10 mb-6">
@@ -69,7 +93,7 @@ const HowItWorksSection = () => {
                   <p className="text-muted-foreground font-bengali">{step.description}</p>
                   <p className="text-muted-foreground text-sm mt-2">{step.descriptionEn}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

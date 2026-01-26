@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const CTASection = forwardRef<HTMLElement>((props, ref) => {
   return (
@@ -11,11 +12,23 @@ const CTASection = forwardRef<HTMLElement>((props, ref) => {
       <div className="absolute bottom-10 right-1/4 w-72 h-72 bg-accent/20 rounded-full blur-3xl" />
 
       <div className="container px-4 relative z-10">
-        <div className="max-w-3xl mx-auto text-center">
+        <motion.div 
+          className="max-w-3xl mx-auto text-center"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+        >
           {/* Icon */}
-          <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-bengal flex items-center justify-center mb-8 glow-green">
+          <motion.div 
+            className="w-20 h-20 mx-auto rounded-2xl bg-gradient-bengal flex items-center justify-center mb-8 glow-green"
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <Sparkles className="w-10 h-10 text-primary-foreground" />
-          </div>
+          </motion.div>
 
           {/* Headline */}
           <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
@@ -31,7 +44,13 @@ const CTASection = forwardRef<HTMLElement>((props, ref) => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <motion.div 
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg glow-green group">
               <Sparkles className="w-5 h-5 mr-2" />
               <span className="font-bengali">বিনামূল্যে শুরু করুন</span>
@@ -42,10 +61,16 @@ const CTASection = forwardRef<HTMLElement>((props, ref) => {
               <span className="mx-2">•</span>
               <span>Watch Demo</span>
             </Button>
-          </div>
+          </motion.div>
 
           {/* Trust badges */}
-          <div className="mt-12 flex items-center justify-center gap-6 text-muted-foreground text-sm">
+          <motion.div 
+            className="mt-12 flex items-center justify-center gap-6 text-muted-foreground text-sm"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="font-bengali">ফ্রি ফরেভার প্ল্যান</span>
@@ -58,8 +83,8 @@ const CTASection = forwardRef<HTMLElement>((props, ref) => {
               <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="font-bengali">বাংলায় সাপোর্ট</span>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
