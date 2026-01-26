@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,6 +39,7 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <ThemeToggle />
             <Link to="/signin">
               <Button variant="ghost">Log In</Button>
             </Link>
@@ -74,6 +76,10 @@ const Header = () => {
                 ডকুমেন্টেশন
               </a>
               <div className="flex flex-col gap-2 pt-4">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-muted-foreground">Theme</span>
+                  <ThemeToggle />
+                </div>
                 <Link to="/signin">
                   <Button variant="outline" className="w-full">Log In</Button>
                 </Link>
