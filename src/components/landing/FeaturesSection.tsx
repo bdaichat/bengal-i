@@ -1,5 +1,6 @@
 import { Code2, Globe, Layout, Sparkles, Zap, MessageSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 const features = [
   {
@@ -51,7 +52,13 @@ const FeaturesSection = () => {
     <section id="features" className="py-24 bg-muted/30 scroll-mt-16">
       <div className="container px-4">
         {/* Section header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <motion.div 
+          className="max-w-3xl mx-auto text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
+        >
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
             <span className="text-gradient-bengal font-bengali">কেন Build Bengal AI?</span>
           </h2>
@@ -61,25 +68,34 @@ const FeaturesSection = () => {
           <p className="text-muted-foreground mt-4 font-bengali">
             বাংলাদেশের ডেভেলপারদের জন্য তৈরি, সবার জন্য সহজ।
           </p>
-        </div>
+        </motion.div>
 
         {/* Features grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {features.map((feature, index) => (
-            <Card 
-              key={index} 
-              className="group bg-card hover:bg-card/80 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10"
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                duration: 0.5, 
+                delay: index * 0.1,
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
             >
-              <CardContent className="p-6">
-                <div className="w-12 h-12 rounded-xl bg-gradient-bengal flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <h3 className="text-xl font-semibold mb-1 font-bengali">{feature.title}</h3>
-                <p className="text-sm text-primary mb-2">{feature.titleEn}</p>
-                <p className="text-muted-foreground text-sm font-bengali">{feature.description}</p>
-                <p className="text-muted-foreground text-xs mt-1">{feature.descriptionEn}</p>
-              </CardContent>
-            </Card>
+              <Card className="group h-full bg-card hover:bg-card/80 border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10">
+                <CardContent className="p-6">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-bengal flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                    <feature.icon className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-1 font-bengali">{feature.title}</h3>
+                  <p className="text-sm text-primary mb-2">{feature.titleEn}</p>
+                  <p className="text-muted-foreground text-sm font-bengali">{feature.description}</p>
+                  <p className="text-muted-foreground text-xs mt-1">{feature.descriptionEn}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>
