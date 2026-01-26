@@ -1,6 +1,7 @@
 import { Star, Quote } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -102,49 +103,64 @@ const TestimonialsSection = () => {
         {/* Testimonials grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {testimonials.map((testimonial, index) => (
-            <Card
+            <motion.div
               key={index}
-              className="group bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                duration: 0.5, 
+                delay: index * 0.1,
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
             >
-              <CardContent className="p-6">
-                {/* Quote icon */}
-                <Quote className="h-8 w-8 text-primary/20 mb-4" />
+              <Card className="group h-full bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                <CardContent className="p-6">
+                  {/* Quote icon */}
+                  <Quote className="h-8 w-8 text-primary/20 mb-4" />
 
-                {/* Rating */}
-                <StarRating rating={testimonial.rating} />
+                  {/* Rating */}
+                  <StarRating rating={testimonial.rating} />
 
-                {/* Testimonial text */}
-                <p className="mt-4 text-foreground/90 font-bengali leading-relaxed">
-                  {testimonial.text}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {testimonial.textEn}
-                </p>
+                  {/* Testimonial text */}
+                  <p className="mt-4 text-foreground/90 font-bengali leading-relaxed">
+                    {testimonial.text}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {testimonial.textEn}
+                  </p>
 
-                {/* Author */}
-                <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/50">
-                  <Avatar className="h-10 w-10 border-2 border-primary/20">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-                      {testimonial.avatar}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-foreground font-bengali">
-                      {testimonial.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground font-bengali">
-                      {testimonial.role}
-                    </p>
+                  {/* Author */}
+                  <div className="flex items-center gap-3 mt-6 pt-4 border-t border-border/50">
+                    <Avatar className="h-10 w-10 border-2 border-primary/20">
+                      <AvatarImage src="" />
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                        {testimonial.avatar}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-foreground font-bengali">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground font-bengali">
+                        {testimonial.role}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
         </div>
 
         {/* Stats */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
+        <motion.div 
+          className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
           {[
             { value: "৫,০০০+", label: "সক্রিয় ব্যবহারকারী", labelEn: "Active Users" },
             { value: "১০,০০০+", label: "প্রজেক্ট তৈরি", labelEn: "Projects Built" },
@@ -160,7 +176,7 @@ const TestimonialsSection = () => {
               </p>
             </div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
