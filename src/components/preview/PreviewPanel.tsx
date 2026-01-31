@@ -193,8 +193,8 @@ export function PreviewPanel({
     <div className="flex flex-col h-full bg-background border-l border-border">
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/30">
-        <div className="flex items-center gap-1">
-          <TooltipProvider>
+        <TooltipProvider>
+          <div className="flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -208,9 +208,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Desktop</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -224,9 +222,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Tablet</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -240,60 +236,56 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Mobile</TooltipContent>
             </Tooltip>
-            </TooltipProvider>
 
             <div className="w-px h-6 bg-border mx-1" />
 
             {/* Theme Toggle */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={toggleTheme}
-                  >
-                    {themeMode === "light" ? (
-                      <Moon className="h-4 w-4" />
-                    ) : (
-                      <Sun className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {themeMode === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-        </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={toggleTheme}
+                >
+                  {themeMode === "light" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : (
+                    <Sun className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {themeMode === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+              </TooltipContent>
+            </Tooltip>
+          </div>
         
-        <div className="flex items-center gap-1">
-          {/* Auto-save status indicator */}
-          {isAuthenticated && editableCode && (
-            <div className="flex items-center gap-1 mr-2 text-xs text-muted-foreground">
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : currentProjectId ? (
-                <>
-                  <Cloud className="h-3 w-3 text-green-500" />
-                  {lastSaved && <span>{formatLastSaved()}</span>}
-                </>
-              ) : hasUnsavedChanges ? (
-                <>
-                  <CloudOff className="h-3 w-3 text-amber-500" />
-                  <span>Not saved</span>
-                </>
-              ) : null}
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            {/* Auto-save status indicator */}
+            {isAuthenticated && editableCode && (
+              <div className="flex items-center gap-1 mr-2 text-xs text-muted-foreground">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : currentProjectId ? (
+                  <>
+                    <Cloud className="h-3 w-3 text-green-500" />
+                    {lastSaved && <span>{formatLastSaved()}</span>}
+                  </>
+                ) : hasUnsavedChanges ? (
+                  <>
+                    <CloudOff className="h-3 w-3 text-amber-500" />
+                    <span>Not saved</span>
+                  </>
+                ) : null}
+              </div>
+            )}
 
-          {/* Save Button */}
-          {isAuthenticated && editableCode && (
-            <TooltipProvider>
+            {/* Save Button */}
+            {isAuthenticated && editableCode && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -310,13 +302,11 @@ export function PreviewPanel({
                   {currentProjectId ? "Save Changes" : "Save as Project"}
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          )}
+            )}
 
-          <div className="w-px h-6 bg-border mx-1" />
+            <div className="w-px h-6 bg-border mx-1" />
 
-          {/* View Mode Toggle */}
-          <TooltipProvider>
+            {/* View Mode Toggle */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -330,9 +320,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Preview Only</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -346,9 +334,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Split View</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -362,10 +348,8 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Code Only</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          {(viewMode === "code" || viewMode === "split") && hasUnappliedChanges && (
-            <TooltipProvider>
+            {(viewMode === "code" || viewMode === "split") && hasUnappliedChanges && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -379,10 +363,8 @@ export function PreviewPanel({
                 </TooltipTrigger>
                 <TooltipContent>Apply Changes</TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          )}
-          
-          <TooltipProvider>
+            )}
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -396,9 +378,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Refresh</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -413,9 +393,7 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Open in New Tab</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -429,10 +407,8 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Fullscreen</TooltipContent>
             </Tooltip>
-          </TooltipProvider>
 
-          {onClose && (
-            <TooltipProvider>
+            {onClose && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -446,9 +422,9 @@ export function PreviewPanel({
                 </TooltipTrigger>
                 <TooltipContent>Close Preview</TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+            )}
+          </div>
+        </TooltipProvider>
       </div>
       
       {/* Content */}

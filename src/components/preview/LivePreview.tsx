@@ -85,9 +85,15 @@ export function LivePreview({ code, componentName = "App", deviceSize = "desktop
 
     try {
       const html = code ? generatePreviewHTML(code, darkMode) : generatePlaceholderHTML();
+      // Debug logging for preview generation
+      if (code) {
+        console.log('[LivePreview] Generating preview for code length:', code.length);
+      }
       iframeRef.current.srcdoc = html;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to render preview");
+      const errorMessage = err instanceof Error ? err.message : "Failed to render preview";
+      console.error('[LivePreview] Error generating preview:', errorMessage, err);
+      setError(errorMessage);
       setIsLoading(false);
     }
   }, [code, componentName, darkMode]);
