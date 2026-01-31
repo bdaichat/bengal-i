@@ -10,7 +10,8 @@ export interface ExtractedCode {
  * Extract code blocks from markdown content
  */
 export function extractCodeBlocks(markdown: string): ExtractedCode[] {
-  const codeBlockRegex = /```(jsx?|tsx?|html|css)\n([\s\S]*?)```/g;
+  // Updated regex to handle various line endings (\r\n, \n) and optional whitespace
+  const codeBlockRegex = /```(jsx?|tsx?|html|css)\s*[\r\n]+([\s\S]*?)```/g;
   const blocks: ExtractedCode[] = [];
   let match;
   let index = 0;
@@ -42,7 +43,8 @@ function isReactComponent(code: string, language: string): boolean {
   // Check for common React patterns
   const hasJSX = /<[A-Z][a-zA-Z]*|<[a-z]+[^>]*>/.test(code);
   const hasReactImport = /import.*from\s+['"]react['"]/.test(code);
-  const hasFunctionComponent = /function\s+[A-Z][a-zA-Z]*\s*\(|const\s+[A-Z][a-zA-Z]*\s*=\s*\(/.test(code);
+  // Enhanced to match arrow functions with various patterns
+  const hasFunctionComponent = /function\s+[A-Z][a-zA-Z]*\s*\(|const\s+[A-Z][a-zA-Z0-9]*\s*=\s*(\([^)]*\)|[^=])\s*=>/.test(code);
   const hasReturn = /return\s*\(?\s*</.test(code);
   
   return hasJSX && (hasReactImport || hasFunctionComponent || hasReturn);
@@ -97,10 +99,11 @@ export function transformForPreview(code: string, componentName: string = 'App')
 
   // If code doesn't have a render call, add one
   if (!transformed.includes('ReactDOM.render') && !transformed.includes('createRoot')) {
-    // Check if there's an export default
-    if (transformed.includes('export default')) {
-      transformed = transformed.replace(/export\s+default\s+/, '');
-    }
+    // Remove export default statement completely (including the identifier and semicolon)
+    // Handles: export default ComponentName; or export default ComponentName
+    transformed = transformed.replace(/export\s+default\s+\w+;?\s*\n?/g, '');
+    // Also handle inline export default function/const
+    transformed = transformed.replace(/export\s+default\s+(?=function|const|class)/g, '');
     
     // Add render call
     transformed += `\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));
