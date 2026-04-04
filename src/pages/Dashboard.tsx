@@ -53,7 +53,14 @@ export default function Dashboard() {
               <span className="font-display font-bold">Build Bengal AI</span>
             </Link>
           </div>
-          <UserMenu />
+          <div className="flex items-center gap-2">
+            <Link to="/settings">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
+            <UserMenu />
+          </div>
         </div>
       </header>
 

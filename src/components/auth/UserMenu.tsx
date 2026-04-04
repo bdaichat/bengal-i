@@ -77,6 +77,12 @@ export function UserMenu({ language = "en" }: UserMenuProps) {
             {language === "bn" ? "আমার প্রজেক্ট" : "My Projects"}
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+            <Settings className="h-4 w-4" />
+            {language === "bn" ? "সেটিংস" : "Settings"}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut()}
