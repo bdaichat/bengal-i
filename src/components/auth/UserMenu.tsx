@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, User, History, LayoutDashboard } from "lucide-react";
+import { LogOut, User, History, LayoutDashboard, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface UserMenuProps {
@@ -75,6 +75,12 @@ export function UserMenu({ language = "en" }: UserMenuProps) {
           <Link to="/projects" className="flex items-center gap-2 cursor-pointer">
             <User className="h-4 w-4" />
             {language === "bn" ? "আমার প্রজেক্ট" : "My Projects"}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+            <Settings className="h-4 w-4" />
+            {language === "bn" ? "সেটিংস" : "Settings"}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
