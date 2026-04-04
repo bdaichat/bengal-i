@@ -27,7 +27,9 @@ import {
   Sun,
   Moon,
   Columns,
-  Eye
+  Eye,
+  Download,
+  Copy
 } from "lucide-react";
 import {
   Tooltip,
