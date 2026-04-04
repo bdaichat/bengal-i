@@ -29,9 +29,9 @@ const Header = () => {
             <a href="#templates" className="text-muted-foreground hover:text-foreground transition-colors">
               Templates
             </a>
-            <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
               Pricing
-            </a>
+            </Link>
             <a href="#docs" className="text-muted-foreground hover:text-foreground transition-colors font-bengali">
               ডকুমেন্টেশন
             </a>
@@ -69,9 +69,9 @@ const Header = () => {
               <a href="#templates" className="text-muted-foreground hover:text-foreground transition-colors">
                 Templates
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
-              </a>
+              </Link>
               <a href="#docs" className="text-muted-foreground hover:text-foreground transition-colors font-bengali">
                 ডকুমেন্টেশন
               </a>
