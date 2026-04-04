@@ -17,6 +17,7 @@ import ChatHistory from "./pages/ChatHistory";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
 import Dashboard from "./pages/Dashboard";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
