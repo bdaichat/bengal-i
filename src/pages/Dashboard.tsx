@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles, TrendingUp, Settings } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function Dashboard() {
