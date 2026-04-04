@@ -14,6 +14,7 @@ import {
   Edit2,
   X,
   Check,
+  Copy,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Highlight, themes } from "prism-react-renderer";
@@ -252,6 +253,19 @@ export default function ProjectDetail() {
                 <Button variant="outline" onClick={() => setEditing(true)}>
                   <Edit2 className="h-4 w-4 mr-2" />
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!project?.code) return;
+                    navigator.clipboard.writeText(project.code).then(() => {
+                      toast({ title: "Copied!", description: "Code copied to clipboard" });
+                    });
+                  }}
+                  disabled={!project?.code}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
                 </Button>
                 <Button
                   onClick={handleExport}
