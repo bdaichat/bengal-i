@@ -396,6 +396,53 @@ export function PreviewPanel({
               </TooltipTrigger>
               <TooltipContent>Open in New Tab</TooltipContent>
             </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (!editableCode) return;
+                    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+                    const filename = `build-bengal-${timestamp}.tsx`;
+                    const blob = new Blob([editableCode], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast.success(`Downloaded ${filename}`);
+                  }}
+                  disabled={!editableCode}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Download Code</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (!editableCode) return;
+                    navigator.clipboard.writeText(editableCode).then(() => {
+                      toast.success("Copied to clipboard!");
+                    });
+                  }}
+                  disabled={!editableCode}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Copy Code</TooltipContent>
+            </Tooltip>
             
             <Tooltip>
               <TooltipTrigger asChild>

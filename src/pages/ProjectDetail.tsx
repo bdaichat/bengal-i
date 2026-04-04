@@ -14,6 +14,7 @@ import {
   Edit2,
   X,
   Check,
+  Copy,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Highlight, themes } from "prism-react-renderer";
