@@ -255,6 +255,19 @@ export default function ProjectDetail() {
                   Edit
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!project?.code) return;
+                    navigator.clipboard.writeText(project.code).then(() => {
+                      toast({ title: "Copied!", description: "Code copied to clipboard" });
+                    });
+                  }}
+                  disabled={!project?.code}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+                <Button
                   onClick={handleExport}
                   className="bg-gradient-bengal hover:opacity-90"
                 >
