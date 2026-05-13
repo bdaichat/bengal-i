@@ -102,6 +102,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          chat_id: string | null
           code: string | null
           created_at: string
           description: string | null
@@ -112,6 +113,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chat_id?: string | null
           code?: string | null
           created_at?: string
           description?: string | null
@@ -122,6 +124,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chat_id?: string | null
           code?: string | null
           created_at?: string
           description?: string | null
@@ -131,7 +134,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
