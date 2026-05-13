@@ -10,15 +10,25 @@ export interface ExtractedCode {
  * Extract code blocks from markdown content
  */
 export function extractCodeBlocks(markdown: string): ExtractedCode[] {
-  // Updated regex to handle various line endings (\r\n, \n) and optional whitespace
-  const codeBlockRegex = /```(jsx?|tsx?|html|css)\s*[\r\n]+([\s\S]*?)```/g;
+  // Match fenced blocks with an explicit language tag OR plain ``` blocks (fallback for AI responses without a tag)
+  const codeBlockRegex = /```([a-zA-Z0-9_+-]*)\s*[\r\n]+([\s\S]*?)```/g;
   const blocks: ExtractedCode[] = [];
   let match;
   let index = 0;
 
   while ((match = codeBlockRegex.exec(markdown)) !== null) {
-    const language = match[1];
+    const rawLang = (match[1] || "").toLowerCase();
     const code = match[2].trim();
+    // Infer language for untagged blocks: detect JSX/TSX by content
+    let language = rawLang;
+    if (!language) {
+      if (/<[A-Z][a-zA-Z]*|<\/?[a-z]+[^>]*>/.test(code) || /import\s+.*from\s+['"]react['"]/.test(code)) {
+        language = "tsx";
+      } else {
+        language = "text";
+      }
+    }
+    // Skip non-renderable languages for the extractor's component pipeline, but still include them
     const isComponent = isReactComponent(code, language);
     const componentName = isComponent ? extractComponentName(code) : undefined;
 
