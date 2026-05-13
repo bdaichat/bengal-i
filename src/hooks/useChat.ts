@@ -25,13 +25,7 @@ export function useChat(chatId?: string) {
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
   // Load existing chat if chatId is provided
-  useEffect(() => {
-    if (chatId && isAuthenticated) {
-      loadChat(chatId);
-    }
-  }, [chatId, isAuthenticated]);
-
-  const loadChat = async (id: string) => {
+  const loadChat = useCallback(async (id: string) => {
     setInitialLoading(true);
     try {
       const { data: messagesData, error } = await supabase
@@ -63,7 +57,13 @@ export function useChat(chatId?: string) {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [language]);
+
+  useEffect(() => {
+    if (chatId && isAuthenticated) {
+      loadChat(chatId);
+    }
+  }, [chatId, isAuthenticated, loadChat]);
 
   const createNewChat = async (firstMessage: string): Promise<string | null> => {
     if (!user) return null;
