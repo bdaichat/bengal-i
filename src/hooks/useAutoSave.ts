@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 interface UseAutoSaveOptions {
   code: string;
   projectId?: string | null;
+  chatId?: string | null;
   language?: string;
   debounceMs?: number;
   enabled?: boolean;
@@ -21,6 +22,7 @@ interface AutoSaveState {
 export function useAutoSave({
   code,
   projectId = null,
+  chatId = null,
   language = "tsx",
   debounceMs = 2000,
   enabled = true,
@@ -40,6 +42,26 @@ export function useAutoSave({
   useEffect(() => {
     setState(prev => ({ ...prev, currentProjectId: projectId }));
   }, [projectId]);
+
+  // If a chat is associated, look up an existing project linked to that chat and bind to it.
+  useEffect(() => {
+    if (!isAuthenticated || !user || !chatId || projectId) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("chat_id", chatId)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled && !error && data) {
+        setState(prev => ({ ...prev, currentProjectId: data.id }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [chatId, isAuthenticated, user, projectId]);
 
   // Check for unsaved changes
   useEffect(() => {
@@ -101,6 +123,7 @@ export function useAutoSave({
           description: description?.trim() || null,
           code: codeToSave,
           language,
+          chat_id: chatId,
         })
         .select("id")
         .single();
@@ -132,7 +155,7 @@ export function useAutoSave({
       });
       return null;
     }
-  }, [isAuthenticated, user, language]);
+  }, [isAuthenticated, user, language, chatId]);
 
   // Debounced auto-save effect
   useEffect(() => {

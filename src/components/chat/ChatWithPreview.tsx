@@ -23,7 +23,7 @@ import {
 
 export function ChatWithPreview() {
   const { chatId } = useParams();
-  const { messages, isLoading, language, setLanguage, sendMessage, clearMessages, initialLoading } = useChat(chatId);
+  const { messages, isLoading, language, setLanguage, sendMessage, clearMessages, initialLoading, currentChatId } = useChat(chatId);
   const [showTemplates, setShowTemplates] = useState(!chatId && messages.length === 0);
   const [showPreview, setShowPreview] = useState(true);
 
@@ -138,6 +138,7 @@ export function ChatWithPreview() {
               <ResizablePanel defaultSize={50} minSize={30}>
                 <PreviewPanel 
                   code={previewCode}
+                  chatId={currentChatId}
                   onClose={() => setShowPreview(false)}
                 />
               </ResizablePanel>

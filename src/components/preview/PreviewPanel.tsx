@@ -55,6 +55,7 @@ interface PreviewPanelProps {
   componentName?: string;
   onClose?: () => void;
   projectId?: string | null;
+  chatId?: string | null;
   language?: string;
 }
 
@@ -67,6 +68,7 @@ export function PreviewPanel({
   componentName, 
   onClose,
   projectId = null,
+  chatId = null,
   language = "tsx"
 }: PreviewPanelProps) {
   const { isAuthenticated } = useAuthContext();
@@ -94,6 +96,7 @@ export function PreviewPanel({
   } = useAutoSave({
     code: editableCode,
     projectId,
+    chatId,
     language,
     debounceMs: 2000,
     enabled: isAuthenticated,
