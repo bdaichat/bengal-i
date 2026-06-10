@@ -38,7 +38,7 @@ serve(async (req) => {
       );
     }
 
-    const { messages, language } = await req.json();
+    const { messages, language, model } = await req.json();
     
     // Validate input
     if (!Array.isArray(messages)) {
@@ -48,31 +48,53 @@ serve(async (req) => {
       );
     }
 
+    // Validate the requested model against an allowlist (default to fast)
+    const ALLOWED_MODELS = [
+      "google/gemini-3-flash-preview",
+      "google/gemini-2.5-pro",
+    ];
+    const selectedModel = ALLOWED_MODELS.includes(model)
+      ? model
+      : "google/gemini-3-flash-preview";
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Strict output contract shared across languages so the live preview can
+    // always reliably extract and render exactly one component.
+    const outputContract = `
+STRICT OUTPUT RULES (follow exactly):
+- Return EXACTLY ONE fenced code block tagged \`\`\`tsx containing ONE complete, self-contained React component.
+- The component MUST have a default export (export default function App() { ... }).
+- Do NOT import any UI libraries, icon packs, CSS files, or external packages. Only "react" may be imported, and prefer no imports at all (React is globally available in the preview).
+- Style ONLY with inline Tailwind utility classes. No external stylesheets, no styled-components, no shadcn imports.
+- Use semantic, accessible HTML (labels, alt text, button elements) and make the layout responsive with good spacing.
+- Produce polished, production-quality UI — never skeletal or placeholder-only output.
+- All data must be local/mock state inside the component. Do NOT call external APIs or use environment variables.
+- Keep any explanation SHORT and OUTSIDE the code block.`;
+
     const systemPrompt = language === "bn" 
-      ? `আপনি Build Bengal AI - বাংলাদেশের প্রথম AI কোডিং প্ল্যাটফর্ম। আপনি ব্যবহারকারীদের প্রাকৃতিক ভাষায় ওয়েব অ্যাপ্লিকেশন তৈরি করতে সাহায্য করেন।
+      ? `আপনি Build Bengal AI - বাংলাদেশের প্রথম AI কোডিং প্ল্যাটফর্ম। আপনি ব্যবহারকারীদের প্রাকৃতিক ভাষায় সুন্দর ওয়েব অ্যাপ্লিকেশন তৈরি করতে সাহায্য করেন।
 
 আপনার কাজ:
-1. ব্যবহারকারীর প্রজেক্ট আইডিয়া বুঝুন
-2. React, TypeScript, এবং Tailwind CSS ব্যবহার করে কোড জেনারেট করুন
-3. বাংলায় কোড ব্যাখ্যা করুন
-4. প্রজেক্ট উন্নত করার পরামর্শ দিন
+1. ব্যবহারকারীর আইডিয়া বুঝে একটি সম্পূর্ণ, কার্যকরী React কম্পোনেন্ট তৈরি করুন
+2. React, TypeScript এবং Tailwind CSS ব্যবহার করুন
+3. কোড ব্লকের বাইরে সংক্ষেপে বাংলায় ব্যাখ্যা দিন
+4. পরিষ্কার, আধুনিক এবং রেসপনসিভ UI তৈরি করুন
 
-সর্বদা পরিষ্কার, মন্তব্য সহ কোড প্রদান করুন। বাংলাদেশী ব্যবহারকারীদের জন্য উদাহরণ দিন।`
-      : `You are Build Bengal AI - Bangladesh's First AI Coding Platform. You help users build web applications using natural language.
+${outputContract}`
+      : `You are Build Bengal AI - Bangladesh's First AI Coding Platform. You help users build beautiful web applications using natural language.
 
-Your responsibilities:
-1. Understand the user's project idea
-2. Generate code using React, TypeScript, and Tailwind CSS
-3. Explain the code clearly
-4. Suggest improvements for the project
+Your job:
+1. Understand the user's idea and generate ONE complete, working React component
+2. Use React, TypeScript, and Tailwind CSS
+3. Give a SHORT explanation outside the code block
+4. Build clean, modern, responsive UI relevant to Bangladeshi users when applicable
 
-Always provide clean, well-commented code. Use examples relevant to Bangladeshi users when applicable.`;
+${outputContract}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -81,7 +103,7 @@ Always provide clean, well-commented code. Use examples relevant to Bangladeshi 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: selectedModel,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
