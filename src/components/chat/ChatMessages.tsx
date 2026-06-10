@@ -1,16 +1,22 @@
 import { useEffect, useRef } from "react";
 import { Message } from "@/hooks/useChat";
 import { ChatMessage } from "./ChatMessage";
-import { Bot, Loader2 } from "lucide-react";
+import { Bot, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatMessagesProps {
   messages: Message[];
   isLoading: boolean;
   language: "en" | "bn";
+  onRegenerate?: () => void;
 }
 
-export function ChatMessages({ messages, isLoading, language }: ChatMessagesProps) {
+export function ChatMessages({ messages, isLoading, language, onRegenerate }: ChatMessagesProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const lastMessage = messages[messages.length - 1];
+  const canRegenerate =
+    !isLoading && lastMessage?.role === "assistant" && messages.some((m) => m.role === "user");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +58,21 @@ export function ChatMessages({ messages, isLoading, language }: ChatMessagesProp
             </div>
           </div>
         )}
-        
+
+        {canRegenerate && onRegenerate && (
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRegenerate}
+              className="gap-2 text-muted-foreground"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {language === "bn" ? "আবার তৈরি করুন" : "Regenerate"}
+            </Button>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
     </div>
