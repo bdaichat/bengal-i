@@ -12,6 +12,8 @@ export type Message = {
 
 type Language = "en" | "bn";
 
+export type ChatModel = "google/gemini-3-flash-preview" | "google/gemini-2.5-pro";
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 export function useChat(chatId?: string) {
@@ -19,6 +21,7 @@ export function useChat(chatId?: string) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [language, setLanguage] = useState<Language>("en");
+  const [model, setModel] = useState<ChatModel>("google/gemini-3-flash-preview");
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId || null);
   const [initialLoading, setInitialLoading] = useState(!!chatId);
 
@@ -116,7 +119,7 @@ export function useChat(chatId?: string) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ messages: userMessages, language }),
+        body: JSON.stringify({ messages: userMessages, language, model }),
       });
 
       if (!response.ok) {
@@ -171,7 +174,7 @@ export function useChat(chatId?: string) {
 
       onDone();
     },
-    [language]
+    [language, model]
   );
 
   const sendMessage = useCallback(
