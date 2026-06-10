@@ -35,6 +35,13 @@ export default function Dashboard() {
       href: "/history",
       gradient: "from-accent to-accent/70",
     },
+    {
+      title: "Team",
+      description: "Create a team and invite members to collaborate",
+      icon: Users,
+      href: "/team",
+      gradient: "from-primary to-secondary/70",
+    },
   ];
 
   return (
