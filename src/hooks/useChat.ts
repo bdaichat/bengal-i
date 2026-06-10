@@ -261,12 +261,70 @@ export function useChat(chatId?: string) {
     setCurrentChatId(null);
   }, []);
 
+  // Re-run the AI on the last user prompt, replacing the most recent assistant reply.
+  const regenerate = useCallback(async () => {
+    if (isLoading) return;
+
+    // Find the last user message; everything up to and including it is the new history.
+    const lastUserIndex = [...messages].reverse().findIndex((m) => m.role === "user");
+    if (lastUserIndex === -1) return;
+    const cutoff = messages.length - lastUserIndex; // index just after the last user message
+    const baseMessages = messages.slice(0, cutoff);
+
+    setMessages(baseMessages);
+    setIsLoading(true);
+
+    const chatHistory = baseMessages.map((m) => ({ role: m.role, content: m.content }));
+    let assistantContent = "";
+    const assistantId = generateId();
+
+    const updateAssistant = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant" && last.id === assistantId) {
+          return prev.map((m, i) =>
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: assistantId,
+            role: "assistant" as const,
+            content: assistantContent,
+            timestamp: new Date(),
+          },
+        ];
+      });
+    };
+
+    try {
+      await streamChat(chatHistory, updateAssistant, async () => {
+        setIsLoading(false);
+        if (currentChatId && assistantContent) {
+          await saveMessage(currentChatId, "assistant", assistantContent);
+        }
+      });
+    } catch (error) {
+      setIsLoading(false);
+      toast({
+        title: language === "bn" ? "ত্রুটি" : "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  }, [messages, isLoading, streamChat, language, currentChatId]);
+
   return {
     messages,
     isLoading,
     language,
     setLanguage,
+    model,
+    setModel,
     sendMessage,
+    regenerate,
     clearMessages,
     currentChatId,
     initialLoading,
