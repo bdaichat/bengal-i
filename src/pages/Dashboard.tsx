@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { UserMenu } from "@/components/auth/UserMenu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles, TrendingUp, Settings } from "lucide-react";
+import { ArrowLeft, MessageSquare, FolderOpen, History, Sparkles, TrendingUp, Settings, Users } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function Dashboard() {
@@ -35,6 +35,13 @@ export default function Dashboard() {
       href: "/history",
       gradient: "from-accent to-accent/70",
     },
+    {
+      title: "Team",
+      description: "Create a team and invite members to collaborate",
+      icon: Users,
+      href: "/team",
+      gradient: "from-primary to-secondary/70",
+    },
   ];
 
   return (
@@ -54,6 +61,11 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            <Link to="/team">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <Users className="h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/settings">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                 <Settings className="h-5 w-5" />

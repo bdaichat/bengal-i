@@ -5,6 +5,7 @@ import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { TemplateSelector } from "./TemplateSelector";
+import { ModelSelector } from "./ModelSelector";
 import { PreviewPanel } from "@/components/preview/PreviewPanel";
 import { extractCodeBlocks, getBestPreviewCode, transformForPreview } from "@/utils/codeExtractor";
 import { 
@@ -23,7 +24,7 @@ import {
 
 export function ChatWithPreview() {
   const { chatId } = useParams();
-  const { messages, isLoading, language, setLanguage, sendMessage, clearMessages, initialLoading, currentChatId } = useChat(chatId);
+  const { messages, isLoading, language, setLanguage, model, setModel, sendMessage, regenerate, clearMessages, initialLoading, currentChatId } = useChat(chatId);
   const [showTemplates, setShowTemplates] = useState(!chatId && messages.length === 0);
   const [showPreview, setShowPreview] = useState(true);
 
@@ -88,6 +89,12 @@ export function ChatWithPreview() {
         hasMessages={messages.length > 0}
         extraActions={
           <TooltipProvider>
+            <ModelSelector
+              model={model}
+              onModelChange={setModel}
+              language={language}
+              disabled={isLoading}
+            />
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -119,7 +126,12 @@ export function ChatWithPreview() {
                     onSelect={handleTemplateSelect}
                   />
                 ) : (
-                  <ChatMessages messages={messages} isLoading={isLoading} language={language} />
+                  <ChatMessages
+                    messages={messages}
+                    isLoading={isLoading}
+                    language={language}
+                    onRegenerate={regenerate}
+                  />
                 )}
               </div>
               
