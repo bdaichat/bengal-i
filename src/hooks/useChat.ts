@@ -12,7 +12,7 @@ export type Message = {
 
 type Language = "en" | "bn";
 
-export type ChatModel = "google/gemini-3-flash-preview" | "google/gemini-2.5-pro";
+export type ChatModel = "google/gemini-3-flash-preview" | "google/gemini-3.1-pro-preview";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
