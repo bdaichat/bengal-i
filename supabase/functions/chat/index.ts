@@ -52,6 +52,7 @@ serve(async (req) => {
     const ALLOWED_MODELS = [
       "google/gemini-3-flash-preview",
       "google/gemini-2.5-pro",
+      "google/gemini-3.1-pro-preview",
     ];
     const selectedModel = ALLOWED_MODELS.includes(model)
       ? model
