@@ -32,7 +32,7 @@ export function ModelSelector({ model, onModelChange, language, disabled }: Mode
             {language === "bn" ? "ফাস্ট" : "Fast"}
           </span>
         </SelectItem>
-        <SelectItem value="google/gemini-2.5-pro">
+        <SelectItem value="google/gemini-3.1-pro-preview">
           <span className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-secondary" />
             {language === "bn" ? "কোয়ালিটি" : "Quality"}
