@@ -148,7 +148,7 @@ ${outputContract}`;
         model: selectedModel,
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...sanitizedMessages,
         ],
         stream: true,
       }),
