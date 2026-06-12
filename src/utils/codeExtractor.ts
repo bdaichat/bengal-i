@@ -109,11 +109,13 @@ export function transformForPreview(code: string, componentName: string = 'App')
 
   // If code doesn't have a render call, add one
   if (!transformed.includes('ReactDOM.render') && !transformed.includes('createRoot')) {
-    // Remove export default statement completely (including the identifier and semicolon)
-    // Handles: export default ComponentName; or export default ComponentName
-    transformed = transformed.replace(/export\s+default\s+\w+;?\s*\n?/g, '');
-    // Also handle inline export default function/const
-    transformed = transformed.replace(/export\s+default\s+(?=function|const|class)/g, '');
+    // 1) Inline default exports: keep the declaration, drop only the "export default" keyword.
+    //    Handles: export default function App() {} / export default const X = ... / export default class
+    transformed = transformed.replace(/export\s+default\s+(?=function|const|let|var|class)/g, '');
+    // 2) Standalone default export of an identifier: export default App;  -> remove entirely
+    transformed = transformed.replace(/export\s+default\s+[A-Za-z_$][\w$]*\s*;?/g, '');
+    // 3) Named exports: keep the declaration, drop the leading "export" keyword.
+    transformed = transformed.replace(/export\s+(?=(?:function|const|let|var|class)\b)/g, '');
     
     // Add render call
     transformed += `\n\nconst root = ReactDOM.createRoot(document.getElementById('root'));
