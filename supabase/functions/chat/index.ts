@@ -48,6 +48,47 @@ serve(async (req) => {
       );
     }
 
+    // Strictly validate each message to prevent prompt injection.
+    // Only "user" and "assistant" roles are accepted from the client — any
+    // attempt to inject a "system" role (to override AI guardrails) is rejected.
+    const ALLOWED_ROLES = ["user", "assistant"];
+    const MAX_MESSAGES = 50;
+    const MAX_CONTENT_LENGTH = 32_000;
+
+    if (messages.length === 0 || messages.length > MAX_MESSAGES) {
+      return new Response(
+        JSON.stringify({ error: "Invalid number of messages" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    for (const msg of messages) {
+      if (
+        typeof msg !== "object" ||
+        msg === null ||
+        typeof msg.role !== "string" ||
+        typeof msg.content !== "string" ||
+        !ALLOWED_ROLES.includes(msg.role)
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Invalid message format" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (msg.content.length === 0 || msg.content.length > MAX_CONTENT_LENGTH) {
+        return new Response(
+          JSON.stringify({ error: "Message content out of allowed length" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Only forward the validated role/content fields to the AI gateway.
+    const sanitizedMessages = messages.map((m: { role: string; content: string }) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     // Validate the requested model against an allowlist (default to fast)
     const ALLOWED_MODELS = [
       "google/gemini-3-flash-preview",
